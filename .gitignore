@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+*.zip
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Debug / Cursor
+.cursor/
+debug.log
+
+# Environment
+.env
+.env.local
+.env.*.local

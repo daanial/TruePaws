@@ -1,0 +1,322 @@
+/* TruePaws Public Styles - Theme-friendly (layout only, colors inherit) */
+
+.truepaws-error {
+    padding: 1em;
+}
+
+.truepaws-litter {
+    max-width: 800px;
+    margin: 1.5em 0;
+}
+
+.litter-info {
+    margin-bottom: 1.5em;
+    padding: 1em;
+}
+
+.puppies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5em;
+    margin-top: 1.5em;
+}
+
+.puppy-card {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.puppy-image {
+    height: 200px;
+    overflow: hidden;
+}
+
+.puppy-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.puppy-no-image {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.puppy-info {
+    padding: 1em;
+}
+
+.puppy-info h4 {
+    margin: 0 0 0.5em 0;
+}
+
+.contact-button {
+    display: inline-block;
+    padding: 0.5em 1em;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-top: 0.5em;
+}
+
+/* Animal Detail Shortcode (ADP-like) - layout only */
+.truepaws-animal-detail {
+    max-width: 900px;
+    margin: 1.5em 0;
+}
+
+.animal-detail-header {
+    display: flex;
+    gap: 1.5em;
+    margin-bottom: 1.5em;
+}
+
+.animal-detail-image {
+    flex-shrink: 0;
+}
+
+.animal-detail-image img {
+    width: 250px;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.animal-no-image {
+    width: 250px;
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.animal-detail-info {
+    flex: 1;
+}
+
+.animal-detail-name {
+    margin: 0 0 0.25em 0;
+}
+
+.animal-call-name {
+    margin: 0 0 0.5em 0;
+    font-style: italic;
+}
+
+.animal-detail-meta p {
+    margin: 0.25em 0;
+}
+
+.animal-detail-parents,
+.animal-detail-description,
+.animal-detail-ai {
+    margin-bottom: 1.5em;
+}
+
+.animal-detail-parents h4,
+.animal-detail-description h4,
+.animal-detail-ai h4 {
+    margin: 0 0 0.5em 0;
+}
+
+.parents-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75em;
+}
+
+.parent {
+    padding: 0.5em 0;
+}
+
+.animal-detail-ai .ai-content {
+    line-height: 1.6;
+}
+
+.animal-detail-ai .ai-section {
+    padding: 1em 0;
+}
+
+.animal-detail-ai .ai-section-title {
+    margin: 0 0 0.5em 0;
+}
+
+.animal-detail-ai .ai-section-list {
+    margin: 0.5em 0 0 1em;
+    padding-left: 1em;
+}
+
+.animal-detail-ai .ai-section-list li {
+    margin-bottom: 0.25em;
+}
+
+.pedigree-preview p {
+    margin: 0.25em 0;
+}
+
+.animal-detail-cta {
+    margin-top: 1.5em;
+}
+
+/* Legacy animal shortcode classes (kept for compatibility) */
+.truepaws-animal {
+    max-width: 900px;
+    margin: 1.5em 0;
+}
+
+.animal-header {
+    display: flex;
+    gap: 1.5em;
+    margin-bottom: 1.5em;
+}
+
+.animal-image {
+    flex-shrink: 0;
+}
+
+.animal-image img {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.animal-parents {
+    margin-bottom: 1.5em;
+    padding: 1em;
+}
+
+.pedigree-tree {
+    margin-top: 1em;
+    padding: 1em;
+}
+
+.pedigree-generation {
+    display: flex;
+    justify-content: center;
+    gap: 1em;
+    margin-bottom: 1em;
+}
+
+.pedigree-animal {
+    padding: 0.5em;
+    text-align: center;
+    min-width: 120px;
+}
+
+/* Inquiry Form */
+.truepaws-inquiry-form-wrapper {
+    max-width: 500px;
+    margin: 1.5em 0;
+}
+
+.truepaws-inquiry-form {
+    padding: 1.5em;
+}
+
+.inquiry-form-title {
+    margin: 0 0 1em 0;
+}
+
+.inquiry-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1em;
+}
+
+.inquiry-form-group {
+    margin-bottom: 1em;
+}
+
+.inquiry-form-group label {
+    display: block;
+    margin-bottom: 0.35em;
+    font-weight: 500;
+}
+
+.inquiry-form-group .required {
+    color: #c00;
+}
+
+.inquiry-form-group input,
+.inquiry-form-group textarea {
+    width: 100%;
+    padding: 0.5em 0.75em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+}
+
+.inquiry-form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.inquiry-form-actions {
+    margin-top: 1.25em;
+}
+
+.inquiry-submit-btn {
+    padding: 0.6em 1.5em;
+    font-size: 1em;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.inquiry-submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.inquiry-form-message {
+    margin-top: 1em;
+    padding: 0.75em;
+    border-radius: 4px;
+}
+
+.inquiry-form-message.success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+.inquiry-form-message.error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+@media (max-width: 480px) {
+    .inquiry-form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .animal-detail-header,
+    .animal-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .animal-detail-image img,
+    .animal-no-image {
+        width: 100%;
+        max-width: 250px;
+    }
+
+    .parents-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .puppies-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pedigree-generation {
+        flex-direction: column;
+        align-items: center;
+    }
+}
