@@ -24,6 +24,14 @@ function truepaws_get_pedigree($animal_id, $depth = 3) {
         return null;
     }
 
+    // Check cache first
+    $cache_key = 'truepaws_pedigree_' . $animal_id . '_' . $depth;
+    $cached = get_transient($cache_key);
+    
+    if ($cached !== false) {
+        return $cached;
+    }
+
     // Get the animal data
     $animal = $wpdb->get_row(
         $wpdb->prepare(
@@ -46,6 +54,9 @@ function truepaws_get_pedigree($animal_id, $depth = 3) {
 
     // Build generations recursively
     $pedigree['generations'] = truepaws_build_pedigree_generations($animal, $depth, 1);
+
+    // Cache for 1 day (pedigree doesn't change often)
+    set_transient($cache_key, $pedigree, DAY_IN_SECONDS);
 
     return $pedigree;
 }

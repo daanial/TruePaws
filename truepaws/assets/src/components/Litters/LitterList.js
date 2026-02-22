@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { littersAPI } from '../../api/client';
 import Layout from '../shared/Layout';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import PregnancyTracker from '../shared/PregnancyTracker';
 
 function LitterList() {
   const [litters, setLitters] = useState([]);
@@ -27,6 +28,8 @@ function LitterList() {
     return <LoadingSpinner message="Loading litters..." />;
   }
 
+  const pendingLitters = litters.filter(l => !l.actual_whelping_date && l.expected_whelping_date);
+
   return (
     <Layout
       title="Litters"
@@ -36,6 +39,14 @@ function LitterList() {
         </Link>
       }
     >
+      {pendingLitters.length > 0 && (
+        <div className="pregnancy-trackers-section">
+          {pendingLitters.map(litter => (
+            <PregnancyTracker key={litter.id} litter={litter} />
+          ))}
+        </div>
+      )}
+
       <div className="truepaws-table-container">
         <table className="truepaws-table">
           <thead>

@@ -36,13 +36,14 @@ function ContactList() {
   };
 
   const handleExport = () => {
-    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Status', 'Notes'];
+    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Status', 'Inquired About', 'Notes'];
     const rows = contacts.map((c) => [
       c.first_name || '',
       c.last_name || '',
       c.email || '',
       c.phone || '',
       c.status || '',
+      (c.inquiry_animals || []).map((a) => a.name).join('; ') || '',
       c.notes || ''
     ]);
     const csvContent = [
@@ -116,6 +117,7 @@ function ContactList() {
               <th>Email</th>
               <th>Phone</th>
               <th>Status</th>
+              <th>Inquired About</th>
               <th>Created</th>
               <th>Actions</th>
             </tr>
@@ -151,6 +153,20 @@ function ContactList() {
                   <span className={`contact-status status-${contact.status}`}>
                     {contact.status.charAt(0).toUpperCase() + contact.status.slice(1)}
                   </span>
+                </td>
+                <td>
+                  {(contact.inquiry_animals || []).length > 0 ? (
+                    <div className="contact-inquiry-animals">
+                      {(contact.inquiry_animals || []).map((a) => (
+                        <Link key={a.id} to={`/animals/${a.id}`} className="inquiry-animal-link">
+                          {a.name}
+                          {a.breed ? ` (${a.breed})` : ''}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-muted">—</span>
+                  )}
                 </td>
                 <td>{new Date(contact.created_at).toLocaleDateString()}</td>
                 <td>

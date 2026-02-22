@@ -123,6 +123,7 @@ function SettingsPage() {
     address_zip: '',
     address_country: '',
     contact_url: '#contact',
+    webhook_url: '',
     breeds: [],
     gemini_api_key: '',
   });
@@ -286,6 +287,17 @@ function SettingsPage() {
                     autoComplete="new-password"
                   />
                   <p className="description">For AI care advice on animal profiles. Get one at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a></p>
+                </div>
+
+                <div className="truepaws-form-group">
+                  <label>Webhook URL (Zapier / Make)</label>
+                  <input
+                    type="url"
+                    value={settings.webhook_url || ''}
+                    onChange={(e) => handleChange('webhook_url', e.target.value)}
+                    placeholder="https://hooks.zapier.com/..."
+                  />
+                  <p className="description">Optional. Receive HTTP POST when events occur: new inquiry, sale recorded, or litter whelped. Use with Zapier, Make, or any webhook endpoint.</p>
                 </div>
               </div>
             </div>

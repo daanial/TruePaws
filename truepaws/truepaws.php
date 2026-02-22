@@ -3,7 +3,7 @@
  * Plugin Name: TruePaws
  * Plugin URI: https://truepaws.com
  * Description: Self-hosted Kennel Management System for professional breeders. Manage animals, lineage, reproduction, and sales with automated PDF generation.
- * Version: 1.0.5
+ * Version: 1.1.0
  * Author: TruePaws Team
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -21,7 +21,12 @@ if (!defined('ABSPATH')) {
 // Freemius SDK - Development mode (remove for production)
 define('WP_FS__DEV_MODE', true);
 define('WP_FS__SKIP_EMAIL_ACTIVATION', true);
-define('WP_FS__truepaws_SECRET_KEY', 'sk_yy5b!aHZmrW&N5{Q%3{)n)jQfpdMi');
+
+// Secret key should be defined in wp-config.php for security:
+// define('WP_FS__truepaws_SECRET_KEY', 'your-secret-key-here');
+if (!defined('WP_FS__truepaws_SECRET_KEY')) {
+    define('WP_FS__truepaws_SECRET_KEY', '');
+}
 
 if ( ! function_exists( 'tru_fs' ) ) {
     function tru_fs() {
@@ -79,6 +84,7 @@ function tru_fs_uninstall_cleanup() {
 
     // Drop custom tables
     $tables = array(
+        $wpdb->prefix . 'bm_animal_photos',
         $wpdb->prefix . 'bm_animals',
         $wpdb->prefix . 'bm_events',
         $wpdb->prefix . 'bm_contacts',
@@ -99,6 +105,7 @@ function tru_fs_uninstall_cleanup() {
         'truepaws_feeding_instructions',
         'truepaws_gemini_api_key',
         'truepaws_contact_url',
+        'truepaws_webhook_url',
         'truepaws_breeder_name',
         'truepaws_business_name',
         'truepaws_license_number',
@@ -120,7 +127,7 @@ function tru_fs_uninstall_cleanup() {
 }
 
 // Define plugin constants
-define('TRUEPAWS_VERSION', '1.0.5');
+define('TRUEPAWS_VERSION', '1.1.0');
 define('TRUEPAWS_PLUGIN_FILE', __FILE__);
 define('TRUEPAWS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('TRUEPAWS_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -174,6 +181,7 @@ class TruePaws {
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
 
         add_action('plugins_loaded', array($this, 'load_textdomain'));
+        add_action('plugins_loaded', array('TruePaws_Activator', 'maybe_upgrade'), 5);
         add_action('init', array($this, 'init'));
     }
 
@@ -181,18 +189,7 @@ class TruePaws {
      * Plugin activation
      */
     public function activate() {
-        // #region agent log
-        $log_path = '/Users/daanial/Desktop/apps/TruePaws/.cursor/debug.log';
-        $log_data = json_encode(['sessionId'=>'debug-session','runId'=>'activation','hypothesisId'=>'E','location'=>'truepaws.php:activate:entry','message'=>'Activation hook triggered','data'=>['time'=>time()],'timestamp'=>time()*1000]);
-        @file_put_contents($log_path, $log_data."\n", FILE_APPEND);
-        // #endregion
-        
         TruePaws_Activator::activate();
-        
-        // #region agent log
-        $log_data = json_encode(['sessionId'=>'debug-session','runId'=>'activation','hypothesisId'=>'E','location'=>'truepaws.php:activate:exit','message'=>'Activation completed','data'=>['time'=>time()],'timestamp'=>time()*1000]);
-        @file_put_contents($log_path, $log_data."\n", FILE_APPEND);
-        // #endregion
     }
 
     /**
@@ -217,15 +214,10 @@ class TruePaws {
      * Initialize plugin
      */
     public function init() {
-        // #region agent log
-        $log_path = '/Users/daanial/Desktop/apps/TruePaws/.cursor/debug.log';
-        $log_data = json_encode(['sessionId'=>'debug-session','runId'=>'init','hypothesisId'=>'A,C','location'=>'truepaws.php:init:entry','message'=>'Plugin init started','data'=>['TRUEPAWS_PLUGIN_DIR'=>TRUEPAWS_PLUGIN_DIR,'TRUEPAWS_PLUGIN_URL'=>TRUEPAWS_PLUGIN_URL,'is_admin'=>is_admin()],'timestamp'=>time()*1000]);
-        @file_put_contents($log_path, $log_data."\n", FILE_APPEND);
-        // #endregion
-        
         // Initialize core classes
         new TruePaws_Admin_Menu();
         new TruePaws_REST_API();
+        new TruePaws_Notifications();
 
         // Load on admin pages only
         if (is_admin()) {
@@ -236,11 +228,6 @@ class TruePaws {
         if (!is_admin()) {
             new TruePaws_Shortcodes();
         }
-        
-        // #region agent log
-        $log_data = json_encode(['sessionId'=>'debug-session','runId'=>'init','hypothesisId'=>'A,C','location'=>'truepaws.php:init:exit','message'=>'Plugin init completed','data'=>['classes_loaded'=>true],'timestamp'=>time()*1000]);
-        @file_put_contents($log_path, $log_data."\n", FILE_APPEND);
-        // #endregion
     }
 }
 

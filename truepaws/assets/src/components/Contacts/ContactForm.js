@@ -20,23 +20,10 @@ function ContactForm() {
     e.preventDefault();
     setLoading(true);
 
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/631041ab-453e-49a6-a050-6d6b6bc20d6e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContactForm.js:handleSubmit:entry',message:'Contact form submission started',data:{formData:formData},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F,G'})}).catch(()=>{});
-    // #endregion
-
     try {
       const response = await contactsAPI.create(formData);
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/631041ab-453e-49a6-a050-6d6b6bc20d6e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContactForm.js:handleSubmit:success',message:'Contact created',data:{response:response.data},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'G,H'})}).catch(()=>{});
-      // #endregion
-      
       navigate('/contacts');
     } catch (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/631041ab-453e-49a6-a050-6d6b6bc20d6e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContactForm.js:handleSubmit:error',message:'Contact creation failed',data:{error:error.message,response:error.response?.data},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H'})}).catch(()=>{});
-      // #endregion
-      
       console.error('Error creating contact:', error);
       alert('Error creating contact: ' + (error.response?.data?.message || error.message));
     } finally {

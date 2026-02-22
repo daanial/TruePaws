@@ -45,6 +45,11 @@ export const animalsAPI = {
   getTimeline: (id) => api.get(`/animals/${id}/timeline`),
   getPedigree: (id, generations = 3) => api.get(`/animals/${id}/pedigree`, { params: { generations } }),
   getAICareAdvice: (id) => api.get(`/animals/${id}/ai-care-advice`),
+  getMarketingBio: (id) => api.get(`/animals/${id}/ai-marketing-bio`),
+  getPhotos: (id) => api.get(`/animals/${id}/photos`),
+  addPhotos: (id, attachmentIds) => api.post(`/animals/${id}/photos`, { attachment_ids: attachmentIds }),
+  reorderPhotos: (id, photos) => api.put(`/animals/${id}/photos`, { photos }),
+  deletePhoto: (id, photoId) => api.delete(`/animals/${id}/photos/${photoId}`),
 };
 
 export const littersAPI = {
@@ -75,6 +80,7 @@ export const dashboardAPI = {
   getStats: () => api.get('/dashboard/stats'),
   getLatestEvents: () => api.get('/dashboard/latest-events'),
   getSalesReport: () => api.get('/dashboard/sales'),
+  getActivityHeatmap: () => api.get('/dashboard/activity-heatmap'),
 };
 
 export const settingsAPI = {

@@ -73,6 +73,52 @@ class TruePaws_REST_API {
             ),
         ));
 
+        // Animal photos endpoints
+        register_rest_route('truepaws/v1', '/animals/(?P<id>\d+)/photos', array(
+            array(
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => array($this, 'get_animal_photos'),
+                'permission_callback' => array($this, 'check_admin_permissions'),
+            ),
+            array(
+                'methods' => WP_REST_Server::CREATABLE,
+                'callback' => array($this, 'add_animal_photos'),
+                'permission_callback' => array($this, 'check_admin_permissions'),
+                'args' => array(
+                    'attachment_ids' => array(
+                        'required' => true,
+                        'type' => 'array',
+                        'items' => array('type' => 'integer'),
+                    ),
+                ),
+            ),
+            array(
+                'methods' => WP_REST_Server::EDITABLE,
+                'callback' => array($this, 'reorder_animal_photos'),
+                'permission_callback' => array($this, 'check_admin_permissions'),
+                'args' => array(
+                    'photos' => array(
+                        'required' => true,
+                        'type' => 'array',
+                        'items' => array(
+                            'type' => 'object',
+                            'properties' => array(
+                                'id' => array('type' => 'integer'),
+                                'sort_order' => array('type' => 'integer'),
+                                'is_featured' => array('type' => 'integer'),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        ));
+
+        register_rest_route('truepaws/v1', '/animals/(?P<id>\d+)/photos/(?P<photo_id>\d+)', array(
+            'methods' => WP_REST_Server::DELETABLE,
+            'callback' => array($this, 'delete_animal_photo'),
+            'permission_callback' => array($this, 'check_admin_permissions'),
+        ));
+
         // Timeline endpoint
         register_rest_route('truepaws/v1', '/animals/(?P<id>\d+)/timeline', array(
             'methods' => WP_REST_Server::READABLE,
@@ -97,6 +143,20 @@ class TruePaws_REST_API {
         register_rest_route('truepaws/v1', '/animals/(?P<id>\d+)/ai-care-advice', array(
             'methods' => WP_REST_Server::READABLE,
             'callback' => array($this, 'get_animal_ai_care_advice'),
+            'permission_callback' => array($this, 'check_admin_permissions'),
+        ));
+
+        // AI health alerts endpoint
+        register_rest_route('truepaws/v1', '/animals/(?P<id>\d+)/ai-health-alerts', array(
+            'methods' => WP_REST_Server::READABLE,
+            'callback' => array($this, 'get_animal_health_alerts'),
+            'permission_callback' => array($this, 'check_admin_permissions'),
+        ));
+
+        // AI marketing bio endpoint
+        register_rest_route('truepaws/v1', '/animals/(?P<id>\d+)/ai-marketing-bio', array(
+            'methods' => WP_REST_Server::READABLE,
+            'callback' => array($this, 'get_animal_marketing_bio'),
             'permission_callback' => array($this, 'check_admin_permissions'),
         ));
 
@@ -136,6 +196,13 @@ class TruePaws_REST_API {
         register_rest_route('truepaws/v1', '/litters/(?P<id>\d+)/whelp', array(
             'methods' => WP_REST_Server::CREATABLE,
             'callback' => array($this, 'whelp_litter'),
+            'permission_callback' => array($this, 'check_admin_permissions'),
+        ));
+
+        // AI litter name suggestions endpoint
+        register_rest_route('truepaws/v1', '/litters/(?P<id>\d+)/suggest-names', array(
+            'methods' => WP_REST_Server::READABLE,
+            'callback' => array($this, 'suggest_litter_names'),
             'permission_callback' => array($this, 'check_admin_permissions'),
         ));
 
@@ -203,6 +270,13 @@ class TruePaws_REST_API {
             'permission_callback' => array($this, 'check_admin_permissions'),
         ));
 
+        // Dashboard activity heatmap endpoint
+        register_rest_route('truepaws/v1', '/dashboard/activity-heatmap', array(
+            'methods' => WP_REST_Server::READABLE,
+            'callback' => array($this, 'get_activity_heatmap'),
+            'permission_callback' => array($this, 'check_admin_permissions'),
+        ));
+
         // Settings endpoints
         register_rest_route('truepaws/v1', '/settings', array(
             array(
@@ -260,6 +334,12 @@ class TruePaws_REST_API {
         register_rest_route('truepaws/v1', '/animals/(?P<id>\d+)/generate-handover', array(
             'methods' => WP_REST_Server::CREATABLE,
             'callback' => array($this, 'generate_handover_pdf'),
+            'permission_callback' => array($this, 'check_admin_permissions'),
+        ));
+
+        register_rest_route('truepaws/v1', '/animals/(?P<id>\d+)/generate-pedigree-pdf', array(
+            'methods' => WP_REST_Server::CREATABLE,
+            'callback' => array($this, 'generate_pedigree_pdf'),
             'permission_callback' => array($this, 'check_admin_permissions'),
         ));
 
@@ -325,6 +405,9 @@ class TruePaws_REST_API {
             'color_markings' => array(
                 'sanitize_callback' => 'wp_kses_post',
             ),
+            'description' => array(
+                'sanitize_callback' => 'wp_kses_post',
+            ),
             'sex' => array(
                 'required' => $required,
                 'validate_callback' => function($value) {
@@ -387,10 +470,17 @@ class TruePaws_REST_API {
         $where_clause = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
         $query = $wpdb->prepare(
-            "SELECT SQL_CALC_FOUND_ROWS id, name, call_name, registration_number, microchip_id, breed, sex, birth_date, status, sire_id, dam_id, featured_image_id, created_at
-             FROM {$wpdb->prefix}bm_animals
+            "SELECT SQL_CALC_FOUND_ROWS 
+                a.id, a.name, a.call_name, a.registration_number, a.microchip_id, 
+                a.breed, a.sex, a.birth_date, a.status, a.sire_id, a.dam_id, 
+                a.featured_image_id, a.created_at,
+                sire.name as sire_name,
+                dam.name as dam_name
+             FROM {$wpdb->prefix}bm_animals a
+             LEFT JOIN {$wpdb->prefix}bm_animals sire ON a.sire_id = sire.id
+             LEFT JOIN {$wpdb->prefix}bm_animals dam ON a.dam_id = dam.id
              $where_clause
-             ORDER BY created_at DESC
+             ORDER BY a.created_at DESC
              LIMIT %d OFFSET %d",
             array_merge($where_values, array($per_page, $offset))
         );
@@ -398,20 +488,8 @@ class TruePaws_REST_API {
         $animals = $wpdb->get_results($query, ARRAY_A);
         $total = $wpdb->get_var("SELECT FOUND_ROWS()");
 
-        // Add parent names and featured image URLs
+        // Add featured image URLs
         foreach ($animals as &$animal) {
-            if ($animal['sire_id']) {
-                $animal['sire_name'] = $wpdb->get_var($wpdb->prepare(
-                    "SELECT name FROM {$wpdb->prefix}bm_animals WHERE id = %d",
-                    $animal['sire_id']
-                ));
-            }
-            if ($animal['dam_id']) {
-                $animal['dam_name'] = $wpdb->get_var($wpdb->prepare(
-                    "SELECT name FROM {$wpdb->prefix}bm_animals WHERE id = %d",
-                    $animal['dam_id']
-                ));
-            }
             if (!empty($animal['featured_image_id'])) {
                 $image_url = wp_get_attachment_image_url($animal['featured_image_id'], 'medium');
                 if (!$image_url) {
@@ -440,13 +518,16 @@ class TruePaws_REST_API {
     public function create_animal($request) {
         global $wpdb;
 
+        $microchip = sanitize_text_field($request->get_param('microchip_id'));
+        
         $data = array(
             'name' => sanitize_text_field($request->get_param('name')),
             'call_name' => sanitize_text_field($request->get_param('call_name')),
             'registration_number' => sanitize_text_field($request->get_param('registration_number')),
-            'microchip_id' => sanitize_text_field($request->get_param('microchip_id')),
+            'microchip_id' => !empty($microchip) ? $microchip : null,
             'breed' => sanitize_text_field($request->get_param('breed')),
             'color_markings' => wp_kses_post($request->get_param('color_markings')),
+            'description' => wp_kses_post($request->get_param('description')),
             'sex' => $request->get_param('sex'),
             'sire_id' => absint($request->get_param('sire_id')),
             'dam_id' => absint($request->get_param('dam_id')),
@@ -455,15 +536,30 @@ class TruePaws_REST_API {
             'featured_image_id' => absint($request->get_param('featured_image_id')),
         );
 
-        // Remove empty values
-        $data = array_filter($data, function($value) {
+        // Remove empty values (but keep null for microchip_id)
+        $data = array_filter($data, function($value, $key) {
+            if ($key === 'microchip_id') {
+                return true; // Keep null values for microchip_id
+            }
             return $value !== '' && $value !== null;
-        });
+        }, ARRAY_FILTER_USE_BOTH);
 
         $result = $wpdb->insert("{$wpdb->prefix}bm_animals", $data);
 
         if ($result === false) {
-            return new WP_Error('db_error', __('Failed to create animal', 'truepaws'), array('status' => 500));
+            // Check if it's a duplicate microchip_id error
+            if (strpos($wpdb->last_error, 'Duplicate entry') !== false && strpos($wpdb->last_error, 'microchip_id') !== false) {
+                $existing = $wpdb->get_row($wpdb->prepare(
+                    "SELECT id, name FROM {$wpdb->prefix}bm_animals WHERE microchip_id = %s",
+                    $data['microchip_id']
+                ));
+                if ($existing) {
+                    return new WP_Error('duplicate_microchip', 
+                        sprintf(__('This microchip ID is already used by "%s" (ID: %d)', 'truepaws'), $existing->name, $existing->id), 
+                        array('status' => 400));
+                }
+            }
+            return new WP_Error('db_error', __('Failed to create animal: ' . $wpdb->last_error, 'truepaws'), array('status' => 500));
         }
 
         $animal_id = $wpdb->insert_id;
@@ -478,6 +574,9 @@ class TruePaws_REST_API {
                 'created_by' => get_current_user_id()
             ));
         }
+
+        // Clear dashboard cache
+        delete_transient('truepaws_dashboard_stats');
 
         return new WP_REST_Response(array(
             'id' => $animal_id,
@@ -529,7 +628,200 @@ class TruePaws_REST_API {
             }
         }
 
+        // Add photos array
+        $animal['photos'] = $this->get_animal_photos_data($id);
+
         return new WP_REST_Response($animal);
+    }
+
+    /**
+     * Get photos for an animal (internal helper)
+     */
+    private function get_animal_photos_data($animal_id) {
+        global $wpdb;
+        $photos = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, attachment_id, sort_order, is_featured, caption
+             FROM {$wpdb->prefix}bm_animal_photos
+             WHERE animal_id = %d
+             ORDER BY sort_order ASC, id ASC",
+            $animal_id
+        ), ARRAY_A);
+
+        foreach ($photos as &$p) {
+            $url = wp_get_attachment_image_url($p['attachment_id'], 'medium');
+            if (!$url) {
+                $url = wp_get_attachment_image_url($p['attachment_id'], 'full');
+            }
+            if (!$url) {
+                $url = wp_get_attachment_url($p['attachment_id']);
+            }
+            $p['url'] = $url;
+            $p['url_large'] = wp_get_attachment_image_url($p['attachment_id'], 'large') ?: wp_get_attachment_url($p['attachment_id']);
+        }
+        return $photos;
+    }
+
+    public function get_animal_photos($request) {
+        $id = absint($request->get_param('id'));
+        $animal = $this->verify_animal_exists($id);
+        if (is_wp_error($animal)) {
+            return $animal;
+        }
+        return new WP_REST_Response(array('photos' => $this->get_animal_photos_data($id)));
+    }
+
+    public function add_animal_photos($request) {
+        global $wpdb;
+
+        $id = absint($request->get_param('id'));
+        $animal = $this->verify_animal_exists($id);
+        if (is_wp_error($animal)) {
+            return $animal;
+        }
+
+        $attachment_ids = $request->get_param('attachment_ids');
+        if (!is_array($attachment_ids)) {
+            $attachment_ids = array();
+        }
+        $attachment_ids = array_map('absint', array_filter($attachment_ids));
+
+        $max_order = $wpdb->get_var($wpdb->prepare(
+            "SELECT COALESCE(MAX(sort_order), -1) FROM {$wpdb->prefix}bm_animal_photos WHERE animal_id = %d",
+            $id
+        ));
+        $sort_order = intval($max_order) + 1;
+
+        $inserted = array();
+        foreach ($attachment_ids as $att_id) {
+            if ($att_id <= 0) {
+                continue;
+            }
+            $exists = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}bm_animal_photos WHERE animal_id = %d AND attachment_id = %d",
+                $id,
+                $att_id
+            ));
+            if ($exists) {
+                continue;
+            }
+            $is_featured = 0;
+            if (empty($animal['featured_image_id'])) {
+                $is_featured = 1;
+                $wpdb->update("{$wpdb->prefix}bm_animals", array('featured_image_id' => $att_id), array('id' => $id));
+            }
+            $wpdb->insert("{$wpdb->prefix}bm_animal_photos", array(
+                'animal_id' => $id,
+                'attachment_id' => $att_id,
+                'sort_order' => $sort_order++,
+                'is_featured' => $is_featured,
+            ));
+            $inserted[] = array(
+                'id' => $wpdb->insert_id,
+                'attachment_id' => $att_id,
+                'sort_order' => $sort_order - 1,
+                'is_featured' => $is_featured,
+            );
+        }
+
+        return new WP_REST_Response(array(
+            'message' => __('Photos added successfully', 'truepaws'),
+            'photos' => $this->get_animal_photos_data($id),
+        ), 201);
+    }
+
+    public function reorder_animal_photos($request) {
+        global $wpdb;
+
+        $id = absint($request->get_param('id'));
+        $animal = $this->verify_animal_exists($id);
+        if (is_wp_error($animal)) {
+            return $animal;
+        }
+
+        $photos = $request->get_param('photos');
+        if (!is_array($photos)) {
+            return new WP_Error('invalid_data', __('Invalid photos data', 'truepaws'), array('status' => 400));
+        }
+
+        $featured_attachment_id = null;
+        foreach ($photos as $p) {
+            $photo_id = absint($p['id'] ?? 0);
+            $sort_order = isset($p['sort_order']) ? absint($p['sort_order']) : 0;
+            $is_featured = !empty($p['is_featured']);
+
+            if ($photo_id > 0) {
+                $wpdb->update(
+                    "{$wpdb->prefix}bm_animal_photos",
+                    array('sort_order' => $sort_order, 'is_featured' => $is_featured ? 1 : 0),
+                    array('id' => $photo_id, 'animal_id' => $id)
+                );
+                if ($is_featured) {
+                    $featured_attachment_id = $wpdb->get_var($wpdb->prepare(
+                        "SELECT attachment_id FROM {$wpdb->prefix}bm_animal_photos WHERE id = %d",
+                        $photo_id
+                    ));
+                }
+            }
+        }
+
+        if ($featured_attachment_id) {
+            $wpdb->update("{$wpdb->prefix}bm_animal_photos", array('is_featured' => 0), array('animal_id' => $id));
+            $wpdb->update("{$wpdb->prefix}bm_animal_photos", array('is_featured' => 1), array('animal_id' => $id, 'attachment_id' => $featured_attachment_id));
+            $wpdb->update("{$wpdb->prefix}bm_animals", array('featured_image_id' => $featured_attachment_id), array('id' => $id));
+        }
+
+        return new WP_REST_Response(array(
+            'message' => __('Photos reordered successfully', 'truepaws'),
+            'photos' => $this->get_animal_photos_data($id),
+        ));
+    }
+
+    public function delete_animal_photo($request) {
+        global $wpdb;
+
+        $id = absint($request->get_param('id'));
+        $photo_id = absint($request->get_param('photo_id'));
+
+        $photo = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}bm_animal_photos WHERE id = %d AND animal_id = %d",
+            $photo_id,
+            $id
+        ), ARRAY_A);
+
+        if (!$photo) {
+            return new WP_Error('not_found', __('Photo not found', 'truepaws'), array('status' => 404));
+        }
+
+        $wpdb->delete("{$wpdb->prefix}bm_animal_photos", array('id' => $photo_id));
+
+        if (!empty($photo['is_featured'])) {
+            $next = $wpdb->get_row($wpdb->prepare(
+                "SELECT attachment_id FROM {$wpdb->prefix}bm_animal_photos WHERE animal_id = %d ORDER BY sort_order ASC LIMIT 1",
+                $id
+            ), ARRAY_A);
+            $new_featured = $next ? $next['attachment_id'] : null;
+            $wpdb->update("{$wpdb->prefix}bm_animals", array('featured_image_id' => $new_featured), array('id' => $id));
+            if ($new_featured) {
+                $wpdb->update("{$wpdb->prefix}bm_animal_photos", array('is_featured' => 1), array('animal_id' => $id, 'attachment_id' => $new_featured));
+            }
+        }
+
+        return new WP_REST_Response(array(
+            'message' => __('Photo removed successfully', 'truepaws'),
+            'photos' => $this->get_animal_photos_data($id),
+        ));
+    }
+
+    private function verify_animal_exists($id) {
+        global $wpdb;
+        $animal = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}bm_animals WHERE id = %d",
+            $id
+        ), ARRAY_A);
+        if (!$animal) {
+            return new WP_Error('not_found', __('Animal not found', 'truepaws'), array('status' => 404));
+        }
+        return $animal;
     }
 
     public function update_animal($request) {
@@ -551,6 +843,7 @@ class TruePaws_REST_API {
             'microchip_id' => 'sanitize_text_field',
             'breed' => 'sanitize_text_field',
             'color_markings' => 'wp_kses_post',
+            'description' => 'wp_kses_post',
             'sex' => null,
             'sire_id' => 'absint',
             'dam_id' => 'absint',
@@ -569,7 +862,13 @@ class TruePaws_REST_API {
             if ($sanitize === 'absint') {
                 $data[$field] = absint($value);
             } elseif ($sanitize === 'sanitize_text_field') {
-                $data[$field] = sanitize_text_field($value);
+                $sanitized = sanitize_text_field($value);
+                // Convert empty microchip_id to NULL to avoid UNIQUE constraint issues
+                if ($field === 'microchip_id' && empty($sanitized)) {
+                    $data[$field] = null;
+                } else {
+                    $data[$field] = $sanitized;
+                }
             } elseif ($sanitize === 'wp_kses_post') {
                 $data[$field] = wp_kses_post($value);
             } else {
@@ -590,8 +889,25 @@ class TruePaws_REST_API {
         $result = $wpdb->update("{$wpdb->prefix}bm_animals", $data, array('id' => $id));
 
         if ($result === false) {
-            return new WP_Error('db_error', __('Failed to update animal', 'truepaws'), array('status' => 500));
+            // Check if it's a duplicate microchip_id error
+            if (strpos($wpdb->last_error, 'Duplicate entry') !== false && strpos($wpdb->last_error, 'microchip_id') !== false) {
+                if (isset($data['microchip_id'])) {
+                    $existing = $wpdb->get_row($wpdb->prepare(
+                        "SELECT id, name FROM {$wpdb->prefix}bm_animals WHERE microchip_id = %s AND id != %d",
+                        $data['microchip_id'], $id
+                    ));
+                    if ($existing) {
+                        return new WP_Error('duplicate_microchip', 
+                            sprintf(__('This microchip ID is already used by "%s" (ID: %d)', 'truepaws'), $existing->name, $existing->id), 
+                            array('status' => 400));
+                    }
+                }
+            }
+            return new WP_Error('db_error', __('Failed to update animal: ' . $wpdb->last_error, 'truepaws'), array('status' => 500));
         }
+
+        // Clear dashboard cache
+        delete_transient('truepaws_dashboard_stats');
 
         return new WP_REST_Response(array(
             'message' => __('Animal updated successfully', 'truepaws')
@@ -608,6 +924,9 @@ class TruePaws_REST_API {
         if ($result === false) {
             return new WP_Error('db_error', __('Failed to delete animal', 'truepaws'), array('status' => 500));
         }
+
+        // Clear dashboard cache
+        delete_transient('truepaws_dashboard_stats');
 
         return new WP_REST_Response(array(
             'message' => __('Animal deleted successfully', 'truepaws')
@@ -722,7 +1041,7 @@ class TruePaws_REST_API {
         }
 
         $prompt = sprintf(
-            "You are a veterinarian advisor. IMPORTANT: The user breeds %ss only. Provide care and health advice ONLY for %ss. Do NOT include information about other species (cats, dogs, horses, rabbits, etc.).\n\nProvide care and health advice for a %s of breed: %s, %s, age: %s (birth date: %s).\n\nInclude:\n1) Care and health advice for this age and breed\n2) Common care tips\n3) Vaccination schedule and important vaccinations\n4) Other important points\n\nFormat as clear sections with bullet points. Be concise.",
+            "You are a veterinarian advisor. IMPORTANT: The user breeds %ss only. Provide care and health advice ONLY for %ss. Do NOT include information about other species (cats, dogs, horses, rabbits, etc.).\n\nProvide care and health advice for a %s of breed: %s, %s, age: %s (birth date: %s).\n\nInclude:\n1) Care and health advice for this age and breed\n2) Common care tips\n3) Vaccination schedule and important vaccinations\n4) Other important points\n\nFormat as clear sections with bullet points. Be concise. IMPORTANT: Do NOT start with any introductory or conversational sentence (e.g. \"Okay, here's...\", \"Here is...\", \"Sure, ...\"). Begin directly with the first section heading.",
             $species_label,
             $species_label,
             $species_label,
@@ -770,7 +1089,7 @@ class TruePaws_REST_API {
 
         $text = '';
         if (isset($body['candidates'][0]['content']['parts'][0]['text'])) {
-            $text = $body['candidates'][0]['content']['parts'][0]['text'];
+            $text = $this->clean_ai_response($body['candidates'][0]['content']['parts'][0]['text']);
         }
 
         $result = array(
@@ -783,20 +1102,211 @@ class TruePaws_REST_API {
         return new WP_REST_Response($result);
     }
 
+    /**
+     * Get AI-powered health alerts for an animal based on event history
+     */
+    public function get_animal_health_alerts($request) {
+        global $wpdb;
+
+        $id = absint($request->get_param('id'));
+        $api_key = get_option('truepaws_gemini_api_key', '');
+
+        // #region agent log
+        $log_path = '/Users/daanial/Desktop/apps/TruePaws/.cursor/debug-88b937.log';
+        $log_data = json_encode(['sessionId'=>'88b937','runId'=>'debug','hypothesisId'=>'B','location'=>'class-rest-api.php:1048:entry','message'=>'AI health alerts called','data'=>['animal_id'=>$id,'api_key_set'=>!empty($api_key)],'timestamp'=>time()*1000]);
+        @file_put_contents($log_path, $log_data."\n", FILE_APPEND);
+        // #endregion
+
+        if (empty($api_key)) {
+            // #region agent log
+            $log_data = json_encode(['sessionId'=>'88b937','runId'=>'debug','hypothesisId'=>'B','location'=>'class-rest-api.php:1054:no_api_key','message'=>'API key not configured','data'=>['enabled'=>false],'timestamp'=>time()*1000]);
+            @file_put_contents($log_path, $log_data."\n", FILE_APPEND);
+            // #endregion
+            return new WP_REST_Response(array(
+                'enabled' => false,
+                'alerts' => array()
+            ));
+        }
+
+        // Check cache first
+        $cache_key = 'truepaws_health_alerts_' . $id;
+        $cached = get_transient($cache_key);
+        if ($cached !== false) {
+            return new WP_REST_Response($cached);
+        }
+
+        // Get animal info
+        $animal = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT id, name, breed, sex, birth_date FROM {$wpdb->prefix}bm_animals WHERE id = %d",
+                $id
+            ),
+            ARRAY_A
+        );
+
+        if (!$animal) {
+            return new WP_Error('not_found', __('Animal not found', 'truepaws'), array('status' => 404));
+        }
+
+        // Get recent events (last 6 months)
+        $events = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT event_type, event_date, title, meta_data 
+                 FROM {$wpdb->prefix}bm_events 
+                 WHERE animal_id = %d 
+                 AND event_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+                 ORDER BY event_date DESC
+                 LIMIT 50",
+                $id
+            ),
+            ARRAY_A
+        );
+
+        // Build event summary for AI
+        $event_summary = array();
+        foreach ($events as $event) {
+            $event_summary[] = sprintf(
+                "%s on %s: %s",
+                ucfirst($event['event_type']),
+                $event['event_date'],
+                $event['title']
+            );
+        }
+
+        $species = get_option('truepaws_default_species', 'dog');
+        $age_str = 'unknown age';
+        if (!empty($animal['birth_date'])) {
+            $birth = new DateTime($animal['birth_date']);
+            $now = new DateTime();
+            $diff = $now->diff($birth);
+            $age_str = $diff->y . ' years, ' . $diff->m . ' months old';
+        }
+
+        $prompt = sprintf(
+            "You are a veterinary health advisor. Analyze the following %s's health history and identify any important health alerts or concerns.\n\nAnimal: %s (%s, %s)\nAge: %s\n\nRecent health events:\n%s\n\nProvide:\n1) Any overdue vaccinations or health checks\n2) Patterns or concerns from the event history\n3) Recommended actions\n\nFormat as a JSON array of alert objects with 'type' (warning/info/urgent), 'title', and 'message' fields. If no alerts, return empty array. IMPORTANT: Return ONLY the JSON array. Do NOT include any introductory text, explanation, or conversational preamble before or after the JSON.",
+            $species,
+            $animal['name'],
+            $animal['breed'],
+            $animal['sex'] === 'M' ? 'Male' : 'Female',
+            $age_str,
+            !empty($event_summary) ? implode("\n", $event_summary) : 'No recent events recorded'
+        );
+
+        $url = add_query_arg('key', $api_key, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent');
+
+        $response = wp_remote_post($url, array(
+            'timeout' => 30,
+            'headers' => array('Content-Type' => 'application/json'),
+            'body' => wp_json_encode(array(
+                'contents' => array(
+                    array(
+                        'parts' => array(
+                            array('text' => $prompt)
+                        )
+                    )
+                )
+            ))
+        ));
+
+        if (is_wp_error($response)) {
+            // #region agent log
+            $log_path = '/Users/daanial/Desktop/apps/TruePaws/.cursor/debug-88b937.log';
+            $log_data = json_encode(['sessionId'=>'88b937','runId'=>'debug','hypothesisId'=>'B','location'=>'class-rest-api.php:1141:wp_error','message'=>'API request failed','data'=>['error'=>$response->get_error_message()],'timestamp'=>time()*1000]);
+            @file_put_contents($log_path, $log_data."\n", FILE_APPEND);
+            // #endregion
+            return new WP_REST_Response(array(
+                'enabled' => true,
+                'alerts' => array(),
+                'error' => $response->get_error_message()
+            ));
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+
+        // #region agent log
+        $log_path = '/Users/daanial/Desktop/apps/TruePaws/.cursor/debug-88b937.log';
+        $log_data = json_encode(['sessionId'=>'88b937','runId'=>'debug','hypothesisId'=>'B','location'=>'class-rest-api.php:1150:api_response','message'=>'API response received','data'=>['status_code'=>$code,'body_empty'=>empty($body),'has_candidates'=>isset($body['candidates'])],'timestamp'=>time()*1000]);
+        @file_put_contents($log_path, $log_data."\n", FILE_APPEND);
+        // #endregion
+
+        if ($code !== 200 || empty($body)) {
+            return new WP_REST_Response(array(
+                'enabled' => true,
+                'alerts' => array(),
+                'error' => __('Failed to get AI response', 'truepaws')
+            ));
+        }
+
+        $text = '';
+        if (isset($body['candidates'][0]['content']['parts'][0]['text'])) {
+            $text = $body['candidates'][0]['content']['parts'][0]['text'];
+        }
+
+        // #region agent log
+        $log_data = json_encode(['sessionId'=>'88b937','runId'=>'debug','hypothesisId'=>'B','location'=>'class-rest-api.php:1165:parsing','message'=>'Parsing AI response','data'=>['text_length'=>strlen($text),'text_preview'=>substr($text,0,200)],'timestamp'=>time()*1000]);
+        @file_put_contents($log_path, $log_data."\n", FILE_APPEND);
+        // #endregion
+
+        // Try to parse JSON from response
+        $alerts = array();
+        if (preg_match('/\[.*\]/s', $text, $matches)) {
+            $parsed = json_decode($matches[0], true);
+            if (is_array($parsed)) {
+                $alerts = $parsed;
+            }
+            // #region agent log
+            $log_data = json_encode(['sessionId'=>'88b937','runId'=>'debug','hypothesisId'=>'B','location'=>'class-rest-api.php:1172:parsed','message'=>'JSON parsed from AI response','data'=>['alerts_count'=>count($alerts),'json_valid'=>is_array($parsed)],'timestamp'=>time()*1000]);
+            @file_put_contents($log_path, $log_data."\n", FILE_APPEND);
+            // #endregion
+        } else {
+            // #region agent log
+            $log_data = json_encode(['sessionId'=>'88b937','runId'=>'debug','hypothesisId'=>'B','location'=>'class-rest-api.php:1172:no_json','message'=>'No JSON found in AI response','data'=>['text'=>$text],'timestamp'=>time()*1000]);
+            @file_put_contents($log_path, $log_data."\n", FILE_APPEND);
+            // #endregion
+        }
+
+        $result = array(
+            'enabled' => true,
+            'alerts' => $alerts,
+            'cached' => false
+        );
+
+        // Cache for 1 day
+        set_transient($cache_key, $result, DAY_IN_SECONDS);
+
+        return new WP_REST_Response($result);
+    }
+
     // Litter endpoints implementation
     public function get_litters($request) {
         global $wpdb;
 
-        $litters = $wpdb->get_results(
-            "SELECT L.*, S.name as sire_name, D.name as dam_name
+        $page = $request->get_param('page') ?: 1;
+        $per_page = $request->get_param('per_page') ?: 20;
+        $offset = ($page - 1) * $per_page;
+
+        $litters = $wpdb->get_results($wpdb->prepare(
+            "SELECT SQL_CALC_FOUND_ROWS L.*, S.name as sire_name, D.name as dam_name
              FROM {$wpdb->prefix}bm_litters L
              LEFT JOIN {$wpdb->prefix}bm_animals S ON L.sire_id = S.id
              LEFT JOIN {$wpdb->prefix}bm_animals D ON L.dam_id = D.id
-             ORDER BY L.created_at DESC",
-            ARRAY_A
-        );
+             ORDER BY L.created_at DESC
+             LIMIT %d OFFSET %d",
+            $per_page, $offset
+        ), ARRAY_A);
+        
+        $total = $wpdb->get_var("SELECT FOUND_ROWS()");
 
-        return new WP_REST_Response(array('litters' => $litters));
+        return new WP_REST_Response(array(
+            'litters' => $litters,
+            'pagination' => array(
+                'page' => $page,
+                'per_page' => $per_page,
+                'total' => intval($total),
+                'total_pages' => ceil($total / $per_page)
+            )
+        ));
     }
 
     public function create_litter($request) {
@@ -934,76 +1444,220 @@ class TruePaws_REST_API {
             return new WP_Error('not_found', __('Litter not found', 'truepaws'), array('status' => 404));
         }
 
-        // Update litter with whelping data
-        $wpdb->update(
-            "{$wpdb->prefix}bm_litters",
-            array(
-                'actual_whelping_date' => $actual_date,
-                'puppy_count_male' => $male_count,
-                'puppy_count_female' => $female_count
-            ),
-            array('id' => $id)
-        );
+        // Start transaction
+        $wpdb->query('START TRANSACTION');
 
-        // Generate puppy names
-        $puppy_names = truepaws_generate_puppy_names($litter['litter_name'], $male_count, $female_count);
+        try {
+            // Update litter with whelping data
+            $update_result = $wpdb->update(
+                "{$wpdb->prefix}bm_litters",
+                array(
+                    'actual_whelping_date' => $actual_date,
+                    'puppy_count_male' => $male_count,
+                    'puppy_count_female' => $female_count
+                ),
+                array('id' => $id)
+            );
 
-        $created_animals = array();
+            if ($update_result === false) {
+                throw new Exception(__('Failed to update litter', 'truepaws'));
+            }
 
-        // Create male puppies
-        for ($i = 1; $i <= $male_count; $i++) {
-            $animal_id = $wpdb->insert("{$wpdb->prefix}bm_animals", array(
-                'name' => $puppy_names['male'][$i - 1],
-                'sex' => 'M',
-                'sire_id' => $litter['sire_id'],
-                'dam_id' => $litter['dam_id'],
-                'birth_date' => $actual_date,
-                'status' => 'active'
-            ));
+            // Generate puppy names
+            $puppy_names = truepaws_generate_puppy_names($litter['litter_name'], $male_count, $female_count);
 
-            if ($animal_id) {
-                $created_animals[] = $wpdb->insert_id;
+            $created_animals = array();
+
+            // Create male puppies
+            for ($i = 1; $i <= $male_count; $i++) {
+                $animal_result = $wpdb->insert("{$wpdb->prefix}bm_animals", array(
+                    'name' => $puppy_names['male'][$i - 1],
+                    'sex' => 'M',
+                    'sire_id' => $litter['sire_id'],
+                    'dam_id' => $litter['dam_id'],
+                    'birth_date' => $actual_date,
+                    'status' => 'active'
+                ));
+
+                if ($animal_result === false) {
+                    throw new Exception(__('Failed to create puppy', 'truepaws'));
+                }
+
+                $animal_id = $wpdb->insert_id;
+                $created_animals[] = $animal_id;
 
                 // Create birth event
-                $wpdb->insert("{$wpdb->prefix}bm_events", array(
-                    'animal_id' => $wpdb->insert_id,
+                $event_result = $wpdb->insert("{$wpdb->prefix}bm_events", array(
+                    'animal_id' => $animal_id,
                     'event_type' => 'birth',
                     'event_date' => $actual_date,
                     'title' => __('Birth', 'truepaws'),
                     'created_by' => get_current_user_id()
                 ));
+
+                if ($event_result === false) {
+                    throw new Exception(__('Failed to create birth event', 'truepaws'));
+                }
             }
+
+            // Create female puppies
+            for ($i = 1; $i <= $female_count; $i++) {
+                $animal_result = $wpdb->insert("{$wpdb->prefix}bm_animals", array(
+                    'name' => $puppy_names['female'][$i - 1],
+                    'sex' => 'F',
+                    'sire_id' => $litter['sire_id'],
+                    'dam_id' => $litter['dam_id'],
+                    'birth_date' => $actual_date,
+                    'status' => 'active'
+                ));
+
+                if ($animal_result === false) {
+                    throw new Exception(__('Failed to create puppy', 'truepaws'));
+                }
+
+                $animal_id = $wpdb->insert_id;
+                $created_animals[] = $animal_id;
+
+                // Create birth event
+                $event_result = $wpdb->insert("{$wpdb->prefix}bm_events", array(
+                    'animal_id' => $animal_id,
+                    'event_type' => 'birth',
+                    'event_date' => $actual_date,
+                    'title' => __('Birth', 'truepaws'),
+                    'created_by' => get_current_user_id()
+                ));
+
+                if ($event_result === false) {
+                    throw new Exception(__('Failed to create birth event', 'truepaws'));
+                }
+            }
+
+            // Commit transaction
+            $wpdb->query('COMMIT');
+
+            // Clear dashboard cache
+            delete_transient('truepaws_dashboard_stats');
+
+            $this->fire_webhook('litter_whelped', array(
+                'litter_id' => $id,
+                'litter_name' => $litter['litter_name'],
+                'actual_whelping_date' => $actual_date,
+                'male_count' => $male_count,
+                'female_count' => $female_count,
+                'created_animal_ids' => $created_animals,
+            ));
+
+            return new WP_REST_Response(array(
+                'message' => sprintf(__('Created %d puppies successfully', 'truepaws'), count($created_animals)),
+                'created_animals' => $created_animals,
+                'total_created' => count($created_animals)
+            ));
+        } catch (Exception $e) {
+            // Rollback transaction on error
+            $wpdb->query('ROLLBACK');
+            return new WP_Error('db_error', $e->getMessage(), array('status' => 500));
+        }
+    }
+
+    /**
+     * AI-powered litter name suggestions
+     */
+    public function suggest_litter_names($request) {
+        global $wpdb;
+
+        $id = absint($request->get_param('id'));
+        $api_key = get_option('truepaws_gemini_api_key', '');
+
+        if (empty($api_key)) {
+            return new WP_REST_Response(array(
+                'enabled' => false,
+                'suggestions' => array()
+            ));
         }
 
-        // Create female puppies
-        for ($i = 1; $i <= $female_count; $i++) {
-            $animal_id = $wpdb->insert("{$wpdb->prefix}bm_animals", array(
-                'name' => $puppy_names['female'][$i - 1],
-                'sex' => 'F',
-                'sire_id' => $litter['sire_id'],
-                'dam_id' => $litter['dam_id'],
-                'birth_date' => $actual_date,
-                'status' => 'active'
+        // Get litter info
+        $litter = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT L.*, S.name as sire_name, D.name as dam_name, S.breed as breed
+                 FROM {$wpdb->prefix}bm_litters L
+                 LEFT JOIN {$wpdb->prefix}bm_animals S ON L.sire_id = S.id
+                 LEFT JOIN {$wpdb->prefix}bm_animals D ON L.dam_id = D.id
+                 WHERE L.id = %d",
+                $id
+            ),
+            ARRAY_A
+        );
+
+        if (!$litter) {
+            return new WP_Error('not_found', __('Litter not found', 'truepaws'), array('status' => 404));
+        }
+
+        $species = get_option('truepaws_default_species', 'dog');
+        $total_puppies = ($litter['puppy_count_male'] ?: 0) + ($litter['puppy_count_female'] ?: 0);
+
+        $prompt = sprintf(
+            "Generate %d creative and themed puppy names for a %s litter.\n\nBreed: %s\nSire: %s\nDam: %s\nLitter name: %s\n\nProvide a JSON array with %d name suggestions. Each should be unique, appropriate for the breed, and follow a cohesive theme. Return ONLY the JSON array, no other text.\n\nFormat: [\"Name1\", \"Name2\", ...]",
+            max($total_puppies, 6),
+            $species,
+            $litter['breed'] ?: 'Mixed',
+            $litter['sire_name'],
+            $litter['dam_name'],
+            $litter['litter_name'],
+            max($total_puppies, 6)
+        );
+
+        $url = add_query_arg('key', $api_key, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent');
+
+        $response = wp_remote_post($url, array(
+            'timeout' => 30,
+            'headers' => array('Content-Type' => 'application/json'),
+            'body' => wp_json_encode(array(
+                'contents' => array(
+                    array(
+                        'parts' => array(
+                            array('text' => $prompt)
+                        )
+                    )
+                )
+            ))
+        ));
+
+        if (is_wp_error($response)) {
+            return new WP_REST_Response(array(
+                'enabled' => true,
+                'suggestions' => array(),
+                'error' => $response->get_error_message()
             ));
+        }
 
-            if ($animal_id) {
-                $created_animals[] = $wpdb->insert_id;
+        $code = wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
 
-                // Create birth event
-                $wpdb->insert("{$wpdb->prefix}bm_events", array(
-                    'animal_id' => $wpdb->insert_id,
-                    'event_type' => 'birth',
-                    'event_date' => $actual_date,
-                    'title' => __('Birth', 'truepaws'),
-                    'created_by' => get_current_user_id()
-                ));
+        if ($code !== 200 || empty($body)) {
+            return new WP_REST_Response(array(
+                'enabled' => true,
+                'suggestions' => array(),
+                'error' => __('Failed to get AI response', 'truepaws')
+            ));
+        }
+
+        $text = '';
+        if (isset($body['candidates'][0]['content']['parts'][0]['text'])) {
+            $text = $body['candidates'][0]['content']['parts'][0]['text'];
+        }
+
+        // Parse JSON from response
+        $suggestions = array();
+        if (preg_match('/\[.*\]/s', $text, $matches)) {
+            $parsed = json_decode($matches[0], true);
+            if (is_array($parsed)) {
+                $suggestions = $parsed;
             }
         }
 
         return new WP_REST_Response(array(
-            'message' => sprintf(__('Created %d puppies successfully', 'truepaws'), count($created_animals)),
-            'created_animals' => $created_animals,
-            'total_created' => count($created_animals)
+            'enabled' => true,
+            'suggestions' => $suggestions
         ));
     }
 
@@ -1038,7 +1692,58 @@ class TruePaws_REST_API {
             );
         }
 
+        // Attach inquiry animals (animals this contact inquired about via shortcode)
+        $contacts = $this->attach_inquiry_animals_to_contacts($contacts);
+
         return new WP_REST_Response(array('contacts' => $contacts));
+    }
+
+    /**
+     * Attach inquiry_animals array to each contact (animals they inquired about)
+     */
+    private function attach_inquiry_animals_to_contacts($contacts) {
+        global $wpdb;
+
+        if (empty($contacts)) {
+            return $contacts;
+        }
+
+        $contact_ids = array_map(function ($c) {
+            return $c['id'];
+        }, $contacts);
+
+        $placeholders = implode(',', array_fill(0, count($contact_ids), '%d'));
+
+        $inquiry_events = $wpdb->get_results($wpdb->prepare(
+            "SELECT e.animal_id, a.name as animal_name, a.breed,
+                    CAST(JSON_UNQUOTE(COALESCE(JSON_EXTRACT(e.meta_data, '$.contact_id'), '0')) AS UNSIGNED) as contact_id
+             FROM {$wpdb->prefix}bm_events e
+             LEFT JOIN {$wpdb->prefix}bm_animals a ON e.animal_id = a.id
+             WHERE e.event_type = 'note'
+             AND JSON_EXTRACT(e.meta_data, '$.inquiry') IS NOT NULL
+             AND CAST(JSON_UNQUOTE(COALESCE(JSON_EXTRACT(e.meta_data, '$.contact_id'), '0')) AS UNSIGNED) IN ($placeholders)
+             AND e.animal_id IS NOT NULL AND e.animal_id > 0",
+            $contact_ids
+        ), ARRAY_A);
+
+        $by_contact = array();
+        foreach ($inquiry_events as $row) {
+            $cid = (int) $row['contact_id'];
+            if (!isset($by_contact[$cid])) {
+                $by_contact[$cid] = array();
+            }
+            $by_contact[$cid][] = array(
+                'id' => (int) $row['animal_id'],
+                'name' => $row['animal_name'],
+                'breed' => $row['breed'],
+            );
+        }
+
+        foreach ($contacts as &$contact) {
+            $contact['inquiry_animals'] = isset($by_contact[$contact['id']]) ? $by_contact[$contact['id']] : array();
+        }
+
+        return $contacts;
     }
 
     public function create_contact($request) {
@@ -1072,6 +1777,23 @@ class TruePaws_REST_API {
     public function submit_inquiry($request) {
         global $wpdb;
 
+        // Rate limiting: 3 submissions per IP per hour
+        $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $rate_limit_key = 'truepaws_inquiry_rate_' . md5($ip_address);
+        $submissions = get_transient($rate_limit_key);
+        
+        if ($submissions === false) {
+            $submissions = 0;
+        }
+        
+        if ($submissions >= 3) {
+            return new WP_Error(
+                'rate_limit',
+                __('Too many submissions. Please try again later.', 'truepaws'),
+                array('status' => 429)
+            );
+        }
+
         $first_name = sanitize_text_field($request->get_param('first_name'));
         $last_name = sanitize_text_field($request->get_param('last_name'));
         $email = sanitize_email($request->get_param('email'));
@@ -1086,6 +1808,9 @@ class TruePaws_REST_API {
         if (!is_email($email)) {
             return new WP_Error('validation', __('Please enter a valid email address.', 'truepaws'), array('status' => 400));
         }
+        
+        // Increment rate limit counter
+        set_transient($rate_limit_key, $submissions + 1, HOUR_IN_SECONDS);
 
         // Create contact
         $contact_data = array(
@@ -1151,10 +1876,125 @@ class TruePaws_REST_API {
             wp_mail($breeder_email, $subject, $body, array('Content-Type: text/plain; charset=UTF-8'));
         }
 
+        $this->fire_webhook('inquiry', array(
+            'contact_id' => $contact_id,
+            'animal_id' => $animal_id > 0 ? $animal_id : null,
+            'first_name' => $first_name,
+            'last_name' => $last_name,
+        ));
+
+        // Smart Inquiry Auto-Responder: generate AI draft for breeder to review
+        $draft = $this->generate_inquiry_response_draft($first_name, $last_name, $message, $animal, $animal_id);
+        if (!empty($draft)) {
+            $draft_section = "\n\n--- " . __('AI Response Draft (review before sending)', 'truepaws') . " ---\n" . $draft;
+            $wpdb->update(
+                "{$wpdb->prefix}bm_contacts",
+                array('notes' => $message . $draft_section),
+                array('id' => $contact_id)
+            );
+        }
+
         return new WP_REST_Response(array(
             'success' => true,
             'message' => __('Thank you! Your inquiry has been submitted. We will get back to you soon.', 'truepaws')
         ), 201);
+    }
+
+    /**
+     * Generate AI response draft for inquiry using Gemini
+     *
+     * @param string $first_name
+     * @param string $last_name
+     * @param string $message
+     * @param array|null $animal Animal data if inquiry was about specific animal
+     * @param int $animal_id
+     * @return string|null Draft text or null on failure
+     */
+    private function generate_inquiry_response_draft($first_name, $last_name, $message, $animal, $animal_id) {
+        $api_key = get_option('truepaws_gemini_api_key', '');
+        if (empty($api_key)) {
+            return null;
+        }
+
+        global $wpdb;
+        $breeder_name = get_option('truepaws_breeder_name', '');
+        $business_name = get_option('truepaws_business_name', '');
+        $species = get_option('truepaws_default_species', 'dog');
+        $species_label = $species === 'dog' ? 'dog' : ($species === 'cat' ? 'cat' : $species);
+
+        // Get count of available animals (active, not sold)
+        $available_count = $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}bm_animals WHERE status = 'active'"
+        );
+        $available_info = $available_count > 0
+            ? sprintf(__('We currently have %d %s(s) available.', 'truepaws'), $available_count, $species_label)
+            : __('We do not have any available at the moment, but we maintain a waitlist.', 'truepaws');
+
+        $animal_context = '';
+        if ($animal && !empty($animal['name'])) {
+            $animal_context = sprintf(
+                __("The inquiry is regarding our %s named %s.", 'truepaws'),
+                $species_label,
+                $animal['name']
+            );
+        }
+
+        $prompt = sprintf(
+            "You are a professional %s breeder writing a response to a potential customer inquiry. " .
+            "Write a friendly, professional, and personalized email response. " .
+            "Address the customer by their first name (%s). " .
+            "Acknowledge their message and respond helpfully. " .
+            "Do NOT include specific pricing - say you would be happy to discuss details. " .
+            "Do NOT make promises about availability. " .
+            "Keep it warm but professional. " .
+            "Sign off as the breeder. " .
+            "Write only the email body, no subject line.\n\n" .
+            "Breeder/Kennel: %s\n" .
+            "Business: %s\n" .
+            "Availability: %s\n" .
+            "%s\n\n" .
+            "Customer's message:\n%s",
+            $species_label,
+            $first_name,
+            $breeder_name ?: __('The Breeder', 'truepaws'),
+            $business_name ?: __('Our Kennel', 'truepaws'),
+            $available_info,
+            $animal_context,
+            $message
+        );
+
+        $url = add_query_arg('key', $api_key, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent');
+
+        $response = wp_remote_post($url, array(
+            'timeout' => 15,
+            'headers' => array('Content-Type' => 'application/json'),
+            'body' => wp_json_encode(array(
+                'contents' => array(
+                    array(
+                        'parts' => array(
+                            array('text' => $prompt)
+                        )
+                    )
+                )
+            ))
+        ));
+
+        if (is_wp_error($response)) {
+            return null;
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($code !== 200 || empty($body)) {
+            return null;
+        }
+
+        if (isset($body['candidates'][0]['content']['parts'][0]['text'])) {
+            return $this->clean_ai_response($body['candidates'][0]['content']['parts'][0]['text']);
+        }
+
+        return null;
     }
 
     public function get_contact($request) {
@@ -1174,7 +2014,37 @@ class TruePaws_REST_API {
             return new WP_Error('not_found', __('Contact not found', 'truepaws'), array('status' => 404));
         }
 
+        // Attach inquiry animals (animals this contact inquired about)
+        $contact['inquiry_animals'] = $this->get_contact_inquiry_animals($id);
+
         return new WP_REST_Response($contact);
+    }
+
+    /**
+     * Get animals a contact inquired about (from inquiry events)
+     */
+    private function get_contact_inquiry_animals($contact_id) {
+        global $wpdb;
+
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT e.animal_id, a.name as animal_name, a.breed
+             FROM {$wpdb->prefix}bm_events e
+             LEFT JOIN {$wpdb->prefix}bm_animals a ON e.animal_id = a.id
+             WHERE e.event_type = 'note'
+             AND JSON_EXTRACT(e.meta_data, '$.inquiry') IS NOT NULL
+             AND CAST(JSON_UNQUOTE(COALESCE(JSON_EXTRACT(e.meta_data, '$.contact_id'), '0')) AS UNSIGNED) = %d
+             AND e.animal_id IS NOT NULL AND e.animal_id > 0
+             ORDER BY e.event_date DESC",
+            $contact_id
+        ), ARRAY_A);
+
+        return array_map(function ($row) {
+            return array(
+                'id' => (int) $row['animal_id'],
+                'name' => $row['animal_name'],
+                'breed' => $row['breed'],
+            );
+        }, $rows ?: array());
     }
 
     /**
@@ -1280,6 +2150,17 @@ class TruePaws_REST_API {
             return new WP_Error('db_error', __('Failed to create event', 'truepaws'), array('status' => 500));
         }
 
+        $meta_data = $request->get_param('meta_data') ?: array();
+        if (!empty($meta_data['sale_type']) && $meta_data['sale_type'] === 'sale') {
+            $this->fire_webhook('sale', array(
+                'event_id' => $wpdb->insert_id,
+                'animal_id' => $animal_id,
+                'contact_id' => isset($meta_data['contact_id']) ? absint($meta_data['contact_id']) : null,
+                'sale_date' => $data['event_date'],
+                'price' => isset($meta_data['price']) ? $meta_data['price'] : null,
+            ));
+        }
+
         return new WP_REST_Response(array(
             'id' => $wpdb->insert_id,
             'message' => __('Event created successfully', 'truepaws')
@@ -1353,10 +2234,47 @@ class TruePaws_REST_API {
     }
 
     /**
+     * Generate pedigree certificate PDF
+     */
+    public function generate_pedigree_pdf($request) {
+        $animal_id = absint($request->get_param('id'));
+
+        try {
+            $result = TruePaws_PDF_Generator::generate_pedigree_certificate($animal_id);
+
+            if ($result && (!empty($result['pdf']) || !empty($result['html']))) {
+                $response = array(
+                    'message' => __('Pedigree certificate generated successfully', 'truepaws'),
+                    'filename' => $result['filename']
+                );
+                if (!empty($result['pdf'])) {
+                    $response['pdf'] = $result['pdf'];
+                }
+                if (!empty($result['html'])) {
+                    $response['html'] = $result['html'];
+                }
+                return new WP_REST_Response($response);
+            } else {
+                return new WP_Error('pdf_error', __('Failed to generate pedigree certificate', 'truepaws'), array('status' => 500));
+            }
+        } catch (Exception $e) {
+            return new WP_Error('pdf_error', __('Error generating pedigree: ' . $e->getMessage(), 'truepaws'), array('status' => 500));
+        }
+    }
+
+    /**
      * Get dashboard statistics
      */
     public function get_dashboard_stats($request) {
         global $wpdb;
+        
+        // Check cache first
+        $cache_key = 'truepaws_dashboard_stats';
+        $cached_stats = get_transient($cache_key);
+        
+        if ($cached_stats !== false) {
+            return rest_ensure_response($cached_stats);
+        }
         
         $animals_table = $wpdb->prefix . 'bm_animals';
         $litters_table = $wpdb->prefix . 'bm_litters';
@@ -1368,8 +2286,9 @@ class TruePaws_REST_API {
         
         // Count active litters (not whelped or whelped within last 60 days)
         $active_litters = $wpdb->get_var("
-            SELECT COUNT(*) FROM $litters_table 
-            WHERE whelped = 0 OR (whelped = 1 AND whelping_date >= DATE_SUB(NOW(), INTERVAL 60 DAY))
+            SELECT COUNT(*) FROM $litters_table
+            WHERE actual_whelping_date IS NULL 
+            OR actual_whelping_date >= DATE_SUB(NOW(), INTERVAL 60 DAY)
         ");
         
         // Count total contacts
@@ -1391,7 +2310,7 @@ class TruePaws_REST_API {
             LIMIT 10
         ", ARRAY_A);
         
-        return rest_ensure_response(array(
+        $stats = array(
             'success' => true,
             'stats' => array(
                 'totalAnimals' => (int) $total_animals,
@@ -1400,7 +2319,12 @@ class TruePaws_REST_API {
                 'upcomingEvents' => (int) $upcoming_events,
                 'breedsByCount' => $breeds_by_count ?: array(),
             )
-        ));
+        );
+        
+        // Cache for 5 minutes
+        set_transient($cache_key, $stats, 5 * MINUTE_IN_SECONDS);
+        
+        return rest_ensure_response($stats);
     }
 
     /**
@@ -1609,6 +2533,7 @@ class TruePaws_REST_API {
             'address_zip' => get_option('truepaws_address_zip', ''),
             'address_country' => get_option('truepaws_address_country', ''),
             'contact_url' => get_option('truepaws_contact_url', '#contact'),
+            'webhook_url' => get_option('truepaws_webhook_url', ''),
             'breeds' => $this->get_breeds_array(),
             'gemini_api_key' => $this->get_masked_gemini_api_key(),
         );
@@ -1681,11 +2606,78 @@ class TruePaws_REST_API {
         if (isset($params['contact_url'])) {
             update_option('truepaws_contact_url', esc_url_raw($params['contact_url']));
         }
+        if (isset($params['webhook_url'])) {
+            update_option('truepaws_webhook_url', esc_url_raw($params['webhook_url']));
+        }
 
         return rest_ensure_response(array(
             'success' => true,
             'message' => __('Settings updated successfully', 'truepaws')
         ));
+    }
+
+    /**
+     * Fire webhook to configured URL (Zapier, Make, etc.)
+     *
+     * @param string $event Event type: inquiry, sale, litter_whelped
+     * @param array  $payload Event data (no sensitive secrets)
+     */
+    private function fire_webhook($event, $payload = array()) {
+        $url = get_option('truepaws_webhook_url', '');
+        if (empty($url) || !wp_http_validate_url($url)) {
+            return;
+        }
+        $body = array_merge(
+            array(
+                'event' => $event,
+                'timestamp' => current_time('c'),
+                'source' => 'truepaws',
+            ),
+            $payload
+        );
+        wp_remote_post($url, array(
+            'timeout' => 15,
+            'blocking' => false,
+            'headers' => array('Content-Type' => 'application/json'),
+            'body' => wp_json_encode($body),
+        ));
+    }
+
+    /**
+     * Strip conversational preamble from Gemini AI responses so the output
+     * is clean, presentation-ready text (no "Okay, here's…" openers).
+     */
+    private function clean_ai_response($text) {
+        if (empty($text)) {
+            return $text;
+        }
+
+        $text = trim($text);
+
+        $preamble_patterns = array(
+            '/^(?:Okay|Ok|Sure|Certainly|Of course|Absolutely|Great|Alright|Right)[,!.]?\s*/i',
+            '/^(?:Here(?:\'s| is| are)|I\'ve (?:prepared|compiled|put together|created|generated))\s+[^.:\n]{0,120}[.:]\s*/i',
+            '/^(?:Below (?:is|are)|The following (?:is|are)|Let me (?:provide|share|give))\s+[^.:\n]{0,120}[.:]\s*/i',
+            '/^(?:This is|These are)\s+[^.:\n]{0,80}[.:]\s*/i',
+        );
+
+        $max_passes = 3;
+        for ($i = 0; $i < $max_passes; $i++) {
+            $changed = false;
+            foreach ($preamble_patterns as $pattern) {
+                $cleaned = preg_replace($pattern, '', $text);
+                if ($cleaned !== $text) {
+                    $text = ltrim($cleaned);
+                    $changed = true;
+                    break;
+                }
+            }
+            if (!$changed) {
+                break;
+            }
+        }
+
+        return $text;
     }
 
     /**
@@ -1775,6 +2767,156 @@ class TruePaws_REST_API {
         return rest_ensure_response(array(
             'success' => true,
             'message' => __('Breed deleted successfully', 'truepaws')
+        ));
+    }
+
+    /**
+     * Get activity heatmap data (event counts per day for the past year)
+     */
+    public function get_activity_heatmap($request) {
+        global $wpdb;
+
+        $events_table = $wpdb->prefix . 'bm_events';
+        $one_year_ago = date('Y-m-d', strtotime('-365 days'));
+
+        $results = $wpdb->get_results($wpdb->prepare(
+            "SELECT DATE(event_date) as event_day, COUNT(*) as event_count
+             FROM $events_table
+             WHERE event_date >= %s
+             GROUP BY DATE(event_date)
+             ORDER BY event_day ASC",
+            $one_year_ago
+        ), ARRAY_A);
+
+        $activity = array();
+        if ($results) {
+            foreach ($results as $row) {
+                $activity[$row['event_day']] = (int) $row['event_count'];
+            }
+        }
+
+        return rest_ensure_response(array(
+            'success' => true,
+            'activity' => $activity,
+        ));
+    }
+
+    /**
+     * Generate AI marketing bio for an animal via Gemini API
+     */
+    public function get_animal_marketing_bio($request) {
+        global $wpdb;
+
+        $id = absint($request->get_param('id'));
+        $api_key = get_option('truepaws_gemini_api_key', '');
+
+        if (empty($api_key)) {
+            return new WP_REST_Response(array(
+                'enabled' => false,
+                'message' => __('Configure Gemini API key in Settings to enable AI features.', 'truepaws')
+            ));
+        }
+
+        $animal = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT a.*, s.name as sire_name, d.name as dam_name
+                 FROM {$wpdb->prefix}bm_animals a
+                 LEFT JOIN {$wpdb->prefix}bm_animals s ON a.sire_id = s.id
+                 LEFT JOIN {$wpdb->prefix}bm_animals d ON a.dam_id = d.id
+                 WHERE a.id = %d",
+                $id
+            ),
+            ARRAY_A
+        );
+
+        if (!$animal) {
+            return new WP_Error('not_found', __('Animal not found', 'truepaws'), array('status' => 404));
+        }
+
+        $species = get_option('truepaws_default_species', 'dog');
+        $species_labels = array(
+            'dog' => 'dog', 'cat' => 'cat', 'horse' => 'horse',
+            'rabbit' => 'rabbit', 'guinea_pig' => 'guinea pig',
+            'ferret' => 'ferret', 'bird' => 'bird'
+        );
+        $species_label = isset($species_labels[$species]) ? $species_labels[$species] : $species;
+        $breed = !empty($animal['breed']) ? $animal['breed'] : 'Unknown breed';
+        $sex = ($animal['sex'] === 'M') ? 'Male' : 'Female';
+        $name = $animal['name'];
+        $color = !empty($animal['color_markings']) ? $animal['color_markings'] : '';
+        $sire = !empty($animal['sire_name']) ? $animal['sire_name'] : '';
+        $dam = !empty($animal['dam_name']) ? $animal['dam_name'] : '';
+        $description = !empty($animal['description']) ? $animal['description'] : '';
+
+        $age_str = '';
+        if (!empty($animal['birth_date'])) {
+            $birth = new DateTime($animal['birth_date']);
+            $now = new DateTime();
+            $diff = $now->diff($birth);
+            if ($diff->days < 30) {
+                $age_str = $diff->days . ' days old';
+            } elseif ($diff->days < 365) {
+                $weeks = (int) ($diff->days / 7);
+                $age_str = $weeks . ' weeks old';
+            } else {
+                $age_str = $diff->y . ' year(s) old';
+            }
+        }
+
+        $prompt = sprintf(
+            "Write a warm, professional, and appealing marketing description for a %s available from a reputable breeder. This will be used on the breeder's website.\n\nDetails:\n- Name: %s\n- Breed: %s\n- Sex: %s\n- Age: %s\n- Color/Markings: %s\n- Sire (father): %s\n- Dam (mother): %s\n- Description/notes: %s\n\nWrite 2-3 short paragraphs (150-200 words total). Be warm and inviting but professional. Highlight the breed's qualities, the animal's lineage if known, and make potential buyers excited. Do NOT use markdown formatting. Write plain text only. IMPORTANT: Do NOT start with any introductory or conversational sentence (e.g. \"Okay, here's...\", \"Here is...\", \"Sure, ...\"). Begin directly with the marketing description.",
+            $species_label, $name, $breed, $sex,
+            $age_str ?: 'not specified',
+            $color ?: 'not specified',
+            $sire ?: 'not specified',
+            $dam ?: 'not specified',
+            $description ?: 'none'
+        );
+
+        $url = add_query_arg('key', $api_key, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent');
+
+        $response = wp_remote_post($url, array(
+            'timeout' => 30,
+            'headers' => array('Content-Type' => 'application/json'),
+            'body' => wp_json_encode(array(
+                'contents' => array(
+                    array(
+                        'parts' => array(
+                            array('text' => $prompt)
+                        )
+                    )
+                )
+            ))
+        ));
+
+        if (is_wp_error($response)) {
+            return new WP_REST_Response(array(
+                'enabled' => true,
+                'content' => null,
+                'error' => $response->get_error_message()
+            ));
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($code !== 200 || empty($body)) {
+            $error_msg = isset($body['error']['message']) ? $body['error']['message'] : __('Failed to get AI response', 'truepaws');
+            return new WP_REST_Response(array(
+                'enabled' => true,
+                'content' => null,
+                'error' => $error_msg
+            ));
+        }
+
+        $text = '';
+        if (isset($body['candidates'][0]['content']['parts'][0]['text'])) {
+            $text = $this->clean_ai_response($body['candidates'][0]['content']['parts'][0]['text']);
+        }
+
+        return new WP_REST_Response(array(
+            'enabled' => true,
+            'content' => $text,
         ));
     }
 }

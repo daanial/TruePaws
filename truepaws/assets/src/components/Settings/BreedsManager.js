@@ -71,6 +71,9 @@ function BreedsManager({ breeds, onBreedsChange }) {
   return (
     <div className="breeds-manager">
       <div className="breeds-add-form">
+        <p className="description">
+          Manage your breed list. These breeds will be available in the dropdown when creating or editing animals.
+        </p>
         <form onSubmit={handleAddBreed}>
           <div className="truepaws-form-group">
             <label>Add New Breed</label>
@@ -109,7 +112,10 @@ function BreedsManager({ breeds, onBreedsChange }) {
           <ul className="breeds-list-items">
             {breeds.map((breed) => (
               <li key={breed.id} className="breed-item">
-                <span className="breed-name">{breed.name}</span>
+                <span className="breed-name">
+                  {breed.name}
+                  {breed.species && <span className="breed-species"> ({breed.species})</span>}
+                </span>
                 <button
                   type="button"
                   className="truepaws-button danger small"

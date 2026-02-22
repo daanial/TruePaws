@@ -75,7 +75,7 @@ class TruePaws_Shortcodes {
         // Get available puppies
         $puppies = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT A.id, A.name, A.sex, A.birth_date, A.featured_image_id, A.breed, A.color_markings
+                "SELECT A.id, A.name, A.sex, A.birth_date, A.featured_image_id, A.breed, A.color_markings, A.status
                  FROM {$wpdb->prefix}bm_animals A
                  WHERE A.sire_id = %d AND A.dam_id = %d AND A.birth_date = %s AND A.status = 'active'",
                 $litter['sire_id'],
@@ -106,10 +106,16 @@ class TruePaws_Shortcodes {
                         <div class="puppy-card">
                             <?php if ($puppy['featured_image_id']): ?>
                                 <div class="puppy-image">
+                                    <?php if (!empty($puppy['status'])): ?>
+                                        <span class="animal-status-badge animal-status-badge-overlay status-<?php echo esc_attr($puppy['status']); ?>"><?php echo esc_html($this->get_status_label($puppy['status'])); ?></span>
+                                    <?php endif; ?>
                                     <?php echo wp_get_attachment_image($puppy['featured_image_id'], 'medium', false, array('alt' => esc_attr($puppy['name']))); ?>
                                 </div>
                             <?php else: ?>
                                 <div class="puppy-no-image">
+                                    <?php if (!empty($puppy['status'])): ?>
+                                        <span class="animal-status-badge animal-status-badge-overlay status-<?php echo esc_attr($puppy['status']); ?>"><?php echo esc_html($this->get_status_label($puppy['status'])); ?></span>
+                                    <?php endif; ?>
                                     <span><?php _e('No Photo', 'truepaws'); ?></span>
                                 </div>
                             <?php endif; ?>
@@ -140,12 +146,44 @@ class TruePaws_Shortcodes {
     }
 
     /**
+     * Strip conversational preamble from AI-generated text.
+     */
+    private function strip_ai_preamble($text) {
+        if (empty($text)) {
+            return $text;
+        }
+        $text = trim($text);
+        $patterns = array(
+            '/^(?:Okay|Ok|Sure|Certainly|Of course|Absolutely|Great|Alright|Right)[,!.]?\s*/i',
+            '/^(?:Here(?:\'s| is| are)|I\'ve (?:prepared|compiled|put together|created|generated))\s+[^.:\n]{0,120}[.:]\s*/i',
+            '/^(?:Below (?:is|are)|The following (?:is|are)|Let me (?:provide|share|give))\s+[^.:\n]{0,120}[.:]\s*/i',
+            '/^(?:This is|These are)\s+[^.:\n]{0,80}[.:]\s*/i',
+        );
+        for ($i = 0; $i < 3; $i++) {
+            $changed = false;
+            foreach ($patterns as $pattern) {
+                $cleaned = preg_replace($pattern, '', $text);
+                if ($cleaned !== $text) {
+                    $text = ltrim($cleaned);
+                    $changed = true;
+                    break;
+                }
+            }
+            if (!$changed) {
+                break;
+            }
+        }
+        return $text;
+    }
+
+    /**
      * Format AI content for HTML output (sections, bold, lists)
      */
     private function format_ai_content($text) {
         if (empty($text)) {
             return '';
         }
+        $text = $this->strip_ai_preamble($text);
         $escape = function ($s) {
             return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
         };
@@ -219,6 +257,8 @@ class TruePaws_Shortcodes {
             'show_ai' => 'true',
             'show_pedigree' => 'true',
             'show_inquiry_form' => 'false',
+            'show_gallery' => 'true',
+            'gallery_columns' => '4',
         ), $atts, 'truepaws_animal');
 
         $animal_id = absint($atts['id']);
@@ -249,6 +289,22 @@ class TruePaws_Shortcodes {
         $show_ai = $atts['show_ai'] === 'true';
         $show_pedigree = $atts['show_pedigree'] === 'true';
         $show_inquiry_form = $atts['show_inquiry_form'] === 'true';
+        $show_gallery = $atts['show_gallery'] === 'true';
+        $gallery_columns = absint($atts['gallery_columns']);
+        if ($gallery_columns < 2 || $gallery_columns > 6) {
+            $gallery_columns = 4;
+        }
+
+        $photos = array();
+        if ($show_gallery) {
+            $photos = $wpdb->get_results($wpdb->prepare(
+                "SELECT id, attachment_id, sort_order FROM {$wpdb->prefix}bm_animal_photos WHERE animal_id = %d ORDER BY sort_order ASC, id ASC",
+                $animal_id
+            ), ARRAY_A);
+            if (empty($photos) && !empty($animal['featured_image_id'])) {
+                $photos = array(array('attachment_id' => $animal['featured_image_id'], 'sort_order' => 0));
+            }
+        }
 
         $ai_content = '';
         if ($show_ai) {
@@ -274,6 +330,9 @@ class TruePaws_Shortcodes {
 
                 <div class="animal-detail-info">
                     <h2 class="animal-detail-name"><?php echo esc_html($animal['name']); ?></h2>
+                    <?php if (!empty($animal['status'])): ?>
+                        <span class="animal-status-badge status-<?php echo esc_attr($animal['status']); ?>"><?php echo esc_html($this->get_status_label($animal['status'])); ?></span>
+                    <?php endif; ?>
                     <?php if (!empty($animal['call_name'])): ?>
                         <p class="animal-call-name"><?php echo esc_html('"' . $animal['call_name'] . '"'); ?></p>
                     <?php endif; ?>
@@ -293,6 +352,67 @@ class TruePaws_Shortcodes {
                 </div>
             </div>
 
+            <?php if ($show_gallery && !empty($photos)): ?>
+                <div class="animal-gallery-section">
+                    <h4><?php _e('Photos', 'truepaws'); ?></h4>
+                    <div class="animal-gallery" style="--gallery-cols: <?php echo esc_attr($gallery_columns); ?>">
+                        <?php foreach ($photos as $idx => $p): 
+                            $att_id = isset($p['attachment_id']) ? $p['attachment_id'] : 0;
+                            if (!$att_id) continue;
+                            $thumb_url = wp_get_attachment_image_url($att_id, 'medium');
+                            if (!$thumb_url) $thumb_url = wp_get_attachment_image_url($att_id, 'thumbnail');
+                            if (!$thumb_url) $thumb_url = wp_get_attachment_url($att_id);
+                            $full_url = wp_get_attachment_image_url($att_id, 'large');
+                            if (!$full_url) $full_url = wp_get_attachment_url($att_id);
+                            if (!$thumb_url) continue;
+                        ?>
+                        <button type="button" class="animal-gallery-thumb" data-full="<?php echo esc_url($full_url); ?>" data-index="<?php echo (int)$idx; ?>" aria-label="<?php echo esc_attr(sprintf(__('View photo %d', 'truepaws'), $idx + 1)); ?>">
+                            <img src="<?php echo esc_url($thumb_url); ?>" alt="<?php echo esc_attr($animal['name']); ?>" loading="lazy" />
+                        </button>
+                        <?php endforeach; ?>
+                    </div>
+                    <dialog class="animal-gallery-lightbox" aria-label="<?php esc_attr_e('Photo gallery', 'truepaws'); ?>">
+                        <button type="button" class="animal-gallery-close" aria-label="<?php esc_attr_e('Close', 'truepaws'); ?>">×</button>
+                        <button type="button" class="animal-gallery-prev" aria-label="<?php esc_attr_e('Previous', 'truepaws'); ?>">‹</button>
+                        <img class="animal-gallery-lightbox-img" src="" alt="" />
+                        <button type="button" class="animal-gallery-next" aria-label="<?php esc_attr_e('Next', 'truepaws'); ?>">›</button>
+                    </dialog>
+                    <script>
+                    (function() {
+                        var d = document.currentScript.closest('.truepaws-animal-detail');
+                        if (!d) return;
+                        var thumbs = d.querySelectorAll('.animal-gallery-thumb');
+                        var dialog = d.querySelector('.animal-gallery-lightbox');
+                        var img = d.querySelector('.animal-gallery-lightbox-img');
+                        var closeBtn = d.querySelector('.animal-gallery-close');
+                        var prevBtn = d.querySelector('.animal-gallery-prev');
+                        var nextBtn = d.querySelector('.animal-gallery-next');
+                        var currentIdx = 0;
+                        var images = Array.from(thumbs).map(function(t) { return t.dataset.full; });
+                        function show(idx) {
+                            currentIdx = (idx + images.length) % images.length;
+                            img.src = images[currentIdx];
+                        }
+                        thumbs.forEach(function(btn, i) {
+                            btn.addEventListener('click', function() {
+                                show(i);
+                                dialog.showModal();
+                            });
+                        });
+                        closeBtn.addEventListener('click', function() { dialog.close(); });
+                        dialog.addEventListener('click', function(e) { if (e.target === dialog) dialog.close(); });
+                        prevBtn.addEventListener('click', function(e) { e.stopPropagation(); show(currentIdx - 1); });
+                        nextBtn.addEventListener('click', function(e) { e.stopPropagation(); show(currentIdx + 1); });
+                        dialog.addEventListener('keydown', function(e) {
+                            if (e.key === 'Escape') dialog.close();
+                            if (e.key === 'ArrowLeft') { e.preventDefault(); show(currentIdx - 1); }
+                            if (e.key === 'ArrowRight') { e.preventDefault(); show(currentIdx + 1); }
+                        });
+                    })();
+                    </script>
+                </div>
+            <?php endif; ?>
+
             <?php if (!empty($animal['sire_name']) || !empty($animal['dam_name'])): ?>
                 <div class="animal-detail-parents">
                     <h4><?php _e('Parents', 'truepaws'); ?></h4>
@@ -304,9 +424,16 @@ class TruePaws_Shortcodes {
             <?php endif; ?>
 
             <?php if (!empty($animal['color_markings'])): ?>
+                <div class="animal-detail-section animal-detail-color-markings">
+                    <h4><?php _e('Color/Markings', 'truepaws'); ?></h4>
+                    <p><?php echo esc_html($animal['color_markings']); ?></p>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($animal['description'])): ?>
                 <div class="animal-detail-description">
                     <h4><?php _e('Description', 'truepaws'); ?></h4>
-                    <p><?php echo esc_html($animal['color_markings']); ?></p>
+                    <div class="animal-detail-description-content"><?php echo wp_kses_post(wpautop($animal['description'])); ?></div>
                 </div>
             <?php endif; ?>
 
@@ -378,7 +505,7 @@ class TruePaws_Shortcodes {
 
         $puppies = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT A.id, A.name, A.sex, A.breed, A.birth_date, A.featured_image_id, A.color_markings,
+                "SELECT A.id, A.name, A.sex, A.breed, A.birth_date, A.featured_image_id, A.color_markings, A.status,
                         L.litter_name, S.name as sire_name, D.name as dam_name
                  FROM {$wpdb->prefix}bm_animals A
                  LEFT JOIN {$wpdb->prefix}bm_litters L ON A.sire_id = L.sire_id AND A.dam_id = L.dam_id AND A.birth_date = L.actual_whelping_date
@@ -404,15 +531,24 @@ class TruePaws_Shortcodes {
                     <div class="puppy-card">
                         <?php if ($show_images && $puppy['featured_image_id']): ?>
                             <div class="puppy-image">
+                                <?php if (!empty($puppy['status'])): ?>
+                                    <span class="animal-status-badge animal-status-badge-overlay status-<?php echo esc_attr($puppy['status']); ?>"><?php echo esc_html($this->get_status_label($puppy['status'])); ?></span>
+                                <?php endif; ?>
                                 <?php echo wp_get_attachment_image($puppy['featured_image_id'], 'medium', false, array('alt' => esc_attr($puppy['name']))); ?>
                             </div>
                         <?php elseif ($show_images): ?>
                             <div class="puppy-no-image">
+                                <?php if (!empty($puppy['status'])): ?>
+                                    <span class="animal-status-badge animal-status-badge-overlay status-<?php echo esc_attr($puppy['status']); ?>"><?php echo esc_html($this->get_status_label($puppy['status'])); ?></span>
+                                <?php endif; ?>
                                 <span><?php _e('No Photo', 'truepaws'); ?></span>
                             </div>
                         <?php endif; ?>
 
                         <div class="puppy-info">
+                            <?php if (!empty($puppy['status']) && !$show_images): ?>
+                                <span class="animal-status-badge status-<?php echo esc_attr($puppy['status']); ?>"><?php echo esc_html($this->get_status_label($puppy['status'])); ?></span>
+                            <?php endif; ?>
                             <h4><?php echo esc_html($puppy['name']); ?></h4>
                             <div class="puppy-details">
                                 <span class="puppy-sex"><?php echo $puppy['sex'] === 'M' ? __('Male', 'truepaws') : __('Female', 'truepaws'); ?></span>
@@ -430,6 +566,20 @@ class TruePaws_Shortcodes {
         <?php
 
         return ob_get_clean();
+    }
+
+    /**
+     * Get human-readable status label
+     */
+    private function get_status_label($status) {
+        $labels = array(
+            'active' => __('Available', 'truepaws'),
+            'retired' => __('Retired', 'truepaws'),
+            'sold' => __('Sold', 'truepaws'),
+            'deceased' => __('Deceased', 'truepaws'),
+            'co-owned' => __('Co-owned', 'truepaws'),
+        );
+        return isset($labels[$status]) ? $labels[$status] : ucfirst($status);
     }
 
     /**

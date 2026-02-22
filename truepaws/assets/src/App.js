@@ -13,6 +13,10 @@ import SettingsPage from './components/Settings/SettingsPage';
 import Sidebar from './components/shared/Sidebar';
 import LoadingSpinner from './components/shared/LoadingSpinner';
 import LatestEvents from './components/shared/LatestEvents';
+import { ToastProvider } from './components/shared/ToastContainer';
+import ErrorBoundary from './components/shared/ErrorBoundary';
+import { BreedDistributionChart, SalesChart } from './components/shared/DashboardCharts';
+import ActivityHeatmap from './components/shared/ActivityHeatmap';
 import { dashboardAPI } from './api/client';
 import './styles/main.css';
 
@@ -20,36 +24,40 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
 
   return (
-    <Router>
-      <div className="truepaws-app">
-        <Header />
-        <div className="truepaws-main">
-          <Sidebar />
-          <main className="truepaws-content">
-            {isLoading && <LoadingSpinner />}
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/animals" element={<AnimalList />} />
-              <Route path="/animals/new" element={<AnimalForm />} />
-              <Route path="/animals/:id/edit" element={<AnimalForm />} />
-              <Route path="/animals/:id" element={<AnimalProfile />} />
-              <Route path="/litters" element={<LitterList />} />
-              <Route path="/litters/new" element={<LitterForm />} />
-              <Route path="/litters/:id/whelp" element={<WhelpingWizard />} />
-              <Route path="/contacts" element={<ContactList />} />
-              <Route path="/contacts/new" element={<ContactForm />} />
-              <Route path="/contacts/:id" element={<ContactProfile />} />
-              <Route path="/settings" element={<SettingsPage />} />
-            </Routes>
-          </main>
+    <ToastProvider>
+      <Router>
+        <div className="truepaws-app">
+          <Header />
+          <div className="truepaws-main">
+            <Sidebar />
+            <main className="truepaws-content">
+              {isLoading && <LoadingSpinner />}
+              <ErrorBoundary>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/animals" element={<AnimalList />} />
+                  <Route path="/animals/new" element={<AnimalForm />} />
+                  <Route path="/animals/:id/edit" element={<AnimalForm />} />
+                  <Route path="/animals/:id" element={<AnimalProfile />} />
+                  <Route path="/litters" element={<LitterList />} />
+                  <Route path="/litters/new" element={<LitterForm />} />
+                  <Route path="/litters/:id/whelp" element={<WhelpingWizard />} />
+                  <Route path="/contacts" element={<ContactList />} />
+                  <Route path="/contacts/new" element={<ContactForm />} />
+                  <Route path="/contacts/:id" element={<ContactProfile />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                </Routes>
+              </ErrorBoundary>
+            </main>
+          </div>
         </div>
-      </div>
-    </Router>
+      </Router>
+    </ToastProvider>
   );
 }
 
 function Header() {
-  const pluginUrl = window.truepawsData?.pluginUrl || '';
+  const pluginUrl = (window.truepawsData && window.truepawsData.pluginUrl) || '';
   const logoUrl = `${pluginUrl}assets/src/images/truepaws-logo.png`;
 
   return (
@@ -232,21 +240,17 @@ function Dashboard() {
         </div>
 
         <div className="dashboard-card breed-analytics">
-          <h3 className="card-title">Animals by Breed</h3>
-          {stats.breedsByCount?.length > 0 ? (
-            <ul className="breed-list">
-              {stats.breedsByCount.map((item, index) => (
-                <li key={index} className="breed-list-item">
-                  <span className="breed-name">{item.breed}</span>
-                  <span className="breed-count">{item.count}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="breed-empty">No breed data yet. Add animals to see distribution.</p>
-          )}
+          <h3 className="card-title">Breed Distribution</h3>
+          <BreedDistributionChart breedsByCount={stats.breedsByCount} />
+        </div>
+
+        <div className="dashboard-card sales-analytics">
+          <h3 className="card-title">Sales Overview</h3>
+          <SalesChart />
         </div>
       </div>
+
+      <ActivityHeatmap />
 
       <div className="dashboard-features">
         <h3 className="features-section-title">Why TruePaws?</h3>

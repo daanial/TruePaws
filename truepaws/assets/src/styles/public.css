@@ -1,12 +1,72 @@
 /* TruePaws Public Styles - Theme-friendly (layout only, colors inherit) */
 
+/* Status Badges */
+.animal-status-badge {
+    display: inline-block;
+    padding: 0.25em 0.75em;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 0.5em;
+}
+
+.animal-status-badge.status-active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.animal-status-badge.status-retired {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+.animal-status-badge.status-sold {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.animal-status-badge.status-deceased {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.animal-status-badge.status-co-owned {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.animal-status-badge-overlay {
+    position: absolute;
+    top: 0.5em;
+    left: 0.5em;
+    margin: 0;
+    z-index: 2;
+}
+
+.puppy-image,
+.puppy-no-image {
+    position: relative;
+}
+
 .truepaws-error {
     padding: 1em;
 }
 
-.truepaws-litter {
-    max-width: 800px;
+.truepaws-litter,
+.truepaws-available-puppies {
+    max-width: 900px;
     margin: 1.5em 0;
+    padding: 1.5em;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.litter-header {
+    padding-bottom: 1em;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .litter-info {
@@ -22,8 +82,17 @@
 }
 
 .puppy-card {
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.puppy-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
 .puppy-image {
@@ -35,6 +104,11 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.puppy-card:hover .puppy-image img {
+    transform: scale(1.03);
 }
 
 .puppy-no-image {
@@ -42,10 +116,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    background: #f5f5f5;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .puppy-info {
-    padding: 1em;
+    padding: 1.25em;
 }
 
 .puppy-info h4 {
@@ -54,22 +130,49 @@
 
 .contact-button {
     display: inline-block;
-    padding: 0.5em 1em;
+    padding: 0.5em 1.25em;
     text-decoration: none;
-    border-radius: 4px;
+    border-radius: 6px;
     margin-top: 0.5em;
+    font-weight: 500;
+    transition: opacity 0.2s ease;
 }
 
-/* Animal Detail Shortcode (ADP-like) - layout only */
+.contact-button:hover {
+    opacity: 0.9;
+}
+
+.no-puppies,
+.no-puppies-available {
+    padding: 2em;
+    text-align: center;
+    background: #fafafa;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.no-puppies-available {
+    padding: 2em;
+    margin: 1.5em 0;
+}
+
+/* Animal Detail Shortcode (ADP-like) */
 .truepaws-animal-detail {
     max-width: 900px;
     margin: 1.5em 0;
+    padding: 1.5em;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .animal-detail-header {
     display: flex;
     gap: 1.5em;
     margin-bottom: 1.5em;
+    padding-bottom: 1.5em;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .animal-detail-image {
@@ -81,6 +184,7 @@
     height: 250px;
     object-fit: cover;
     border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .animal-no-image {
@@ -90,6 +194,8 @@
     align-items: center;
     justify-content: center;
     border-radius: 8px;
+    background: #f5f5f5;
+    border: 1px dashed #ddd;
 }
 
 .animal-detail-info {
@@ -110,15 +216,26 @@
 }
 
 .animal-detail-parents,
+.animal-detail-color-markings,
 .animal-detail-description,
-.animal-detail-ai {
+.animal-detail-ai,
+.animal-detail-pedigree {
     margin-bottom: 1.5em;
+    padding: 1.25em;
+    background: #fafafa;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .animal-detail-parents h4,
+.animal-detail-color-markings h4,
 .animal-detail-description h4,
-.animal-detail-ai h4 {
-    margin: 0 0 0.5em 0;
+.animal-detail-ai h4,
+.animal-detail-pedigree h4 {
+    margin: 0 0 0.75em 0;
+    padding-bottom: 0.5em;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+    font-size: 1em;
 }
 
 .parents-grid {
@@ -152,12 +269,145 @@
     margin-bottom: 0.25em;
 }
 
+.animal-detail-description-content {
+    line-height: 1.6;
+}
+
+.animal-detail-description-content p {
+    margin: 0 0 0.75em 0;
+}
+
+.animal-detail-description-content p:last-child {
+    margin-bottom: 0;
+}
+
 .pedigree-preview p {
     margin: 0.25em 0;
 }
 
 .animal-detail-cta {
     margin-top: 1.5em;
+    padding-top: 1.5em;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Animal Photo Gallery */
+.animal-gallery-section {
+    margin-bottom: 1.5em;
+    padding: 1.25em;
+    background: #fafafa;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.animal-gallery-section h4 {
+    margin: 0 0 1em 0;
+    padding-bottom: 0.5em;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+    font-size: 1em;
+}
+
+.animal-gallery {
+    display: grid;
+    grid-template-columns: repeat(var(--gallery-cols, 4), 1fr);
+    gap: 0.75em;
+}
+
+.animal-gallery-thumb {
+    display: block;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 8px;
+    overflow: hidden;
+    aspect-ratio: 1;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.animal-gallery-thumb:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.animal-gallery-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: opacity 0.2s ease;
+}
+
+.animal-gallery-thumb:hover img {
+    opacity: 0.92;
+}
+
+.animal-gallery-lightbox {
+    border: none;
+    padding: 0;
+    max-width: 90vw;
+    max-height: 90vh;
+    background: transparent;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.animal-gallery-lightbox::backdrop {
+    background: rgba(0, 0, 0, 0.85);
+}
+
+.animal-gallery-lightbox .animal-gallery-lightbox-img {
+    max-width: 85vw;
+    max-height: 85vh;
+    object-fit: contain;
+    display: block;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.animal-gallery-close,
+.animal-gallery-prev,
+.animal-gallery-next {
+    position: absolute;
+    border: none;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    cursor: pointer;
+    font-size: 1.5rem;
+    line-height: 1;
+    padding: 0.5em;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+}
+
+.animal-gallery-close:hover,
+.animal-gallery-prev:hover,
+.animal-gallery-next:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.animal-gallery-close {
+    top: 0.5em;
+    right: 0.5em;
+    font-size: 2rem;
+}
+
+.animal-gallery-prev {
+    left: 0.5em;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.animal-gallery-next {
+    right: 0.5em;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.animal-gallery-lightbox {
+    position: relative;
+    padding: 2.5em 3em;
 }
 
 /* Legacy animal shortcode classes (kept for compatibility) */
@@ -210,14 +460,21 @@
 .truepaws-inquiry-form-wrapper {
     max-width: 500px;
     margin: 1.5em 0;
+    padding: 1.5em;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .truepaws-inquiry-form {
-    padding: 1.5em;
+    padding: 0;
 }
 
 .inquiry-form-title {
-    margin: 0 0 1em 0;
+    margin: 0 0 1.25em 0;
+    padding-bottom: 0.5em;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
 }
 
 .inquiry-form-row {
@@ -243,10 +500,18 @@
 .inquiry-form-group input,
 .inquiry-form-group textarea {
     width: 100%;
-    padding: 0.5em 0.75em;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    padding: 0.6em 0.85em;
+    border: 1px solid #ddd;
+    border-radius: 6px;
     font-size: 1em;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.inquiry-form-group input:focus,
+.inquiry-form-group textarea:focus {
+    outline: none;
+    border-color: #666;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
 }
 
 .inquiry-form-group textarea {
@@ -259,10 +524,23 @@
 }
 
 .inquiry-submit-btn {
-    padding: 0.6em 1.5em;
+    padding: 0.65em 1.75em;
     font-size: 1em;
+    font-weight: 600;
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    background: #333;
+    color: #fff;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.inquiry-submit-btn:hover:not(:disabled) {
+    background: #555;
+}
+
+.inquiry-submit-btn:active:not(:disabled) {
+    transform: translateY(1px);
 }
 
 .inquiry-submit-btn:disabled {
@@ -272,18 +550,20 @@
 
 .inquiry-form-message {
     margin-top: 1em;
-    padding: 0.75em;
-    border-radius: 4px;
+    padding: 0.85em;
+    border-radius: 6px;
 }
 
 .inquiry-form-message.success {
     background: #d4edda;
     border: 1px solid #c3e6cb;
+    color: #155724;
 }
 
 .inquiry-form-message.error {
     background: #f8d7da;
     border: 1px solid #f5c6cb;
+    color: #721c24;
 }
 
 @media (max-width: 480px) {
@@ -313,6 +593,10 @@
 
     .puppies-grid {
         grid-template-columns: 1fr;
+    }
+
+    .animal-gallery {
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .pedigree-generation {

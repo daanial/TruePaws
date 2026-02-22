@@ -5,6 +5,9 @@ import Layout from '../shared/Layout';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import Timeline from './Timeline';
 import AnimalImagePlaceholder from '../shared/AnimalImagePlaceholder';
+import MultiPhotoUploader from './MultiPhotoUploader';
+import WeightGrowthChart from '../shared/WeightGrowthChart';
+import DOMPurify from 'dompurify';
 
 function AnimalProfile() {
   const { id } = useParams();
@@ -33,6 +36,10 @@ function AnimalProfile() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState('');
   const [shortcodeCopied, setShortcodeCopied] = useState(false);
+  const [marketingBio, setMarketingBio] = useState(null);
+  const [bioLoading, setBioLoading] = useState(false);
+  const [bioError, setBioError] = useState('');
+  const [bioCopied, setBioCopied] = useState(false);
 
   useEffect(() => {
     setImageError(false);
@@ -79,6 +86,46 @@ function AnimalProfile() {
       setAiCareAdvice({ enabled: false });
     } finally {
       setAiLoading(false);
+    }
+  };
+
+  const stripAIPreamble = (text) => {
+    if (!text) return text;
+    let t = text.trim();
+    const patterns = [
+      /^(?:Okay|Ok|Sure|Certainly|Of course|Absolutely|Great|Alright|Right)[,!.]?\s*/i,
+      /^(?:Here(?:'s| is| are)|I've (?:prepared|compiled|put together|created|generated))\s+[^.:\n]{0,120}[.:]\s*/i,
+      /^(?:Below (?:is|are)|The following (?:is|are)|Let me (?:provide|share|give))\s+[^.:\n]{0,120}[.:]\s*/i,
+      /^(?:This is|These are)\s+[^.:\n]{0,80}[.:]\s*/i,
+    ];
+    for (let pass = 0; pass < 3; pass++) {
+      let changed = false;
+      for (const p of patterns) {
+        const cleaned = t.replace(p, '');
+        if (cleaned !== t) { t = cleaned.trimStart(); changed = true; break; }
+      }
+      if (!changed) break;
+    }
+    return t;
+  };
+
+  const generateMarketingBio = async () => {
+    setBioLoading(true);
+    setBioError('');
+    try {
+      const response = await animalsAPI.getMarketingBio(id);
+      const data = response.data;
+      if (data.enabled === false) {
+        setBioError(data.message || 'Configure Gemini API key in Settings.');
+      } else if (data.error) {
+        setBioError(data.error);
+      } else {
+        setMarketingBio(stripAIPreamble(data.content));
+      }
+    } catch (error) {
+      setBioError(error.response?.data?.message || 'Failed to generate bio');
+    } finally {
+      setBioLoading(false);
     }
   };
 
@@ -185,6 +232,7 @@ function AnimalProfile() {
 
   const formatAIContent = (text) => {
     if (!text) return '';
+    text = stripAIPreamble(text);
     const escape = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const lines = text.split('\n');
     const sections = [];
@@ -459,6 +507,22 @@ function AnimalProfile() {
           </div>
         </div>
 
+        {/* Photo Gallery */}
+        <div className="animal-photos-card">
+          <h3 className="section-title">Photo Gallery</h3>
+          <MultiPhotoUploader
+            animalId={id}
+            photos={animal.photos || []}
+            onPhotosChange={(newPhotos) => {
+              setAnimal((prev) => prev ? { ...prev, photos: newPhotos } : null);
+              const featured = newPhotos.find((p) => p.is_featured);
+              if (featured && (featured.url || featured.url_large)) {
+                setImageUrl(featured.url || featured.url_large);
+              }
+            }}
+          />
+        </div>
+
         {/* Shortcode Card */}
         <div className="animal-shortcode-card">
           <div className="shortcode-header">
@@ -526,6 +590,19 @@ function AnimalProfile() {
             <div className="animal-detail-card">
               <h3 className="section-title">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 6v6l4 2"></path>
+                </svg>
+                Color/Markings
+              </h3>
+              <p className="card-content">{animal.color_markings}</p>
+            </div>
+          )}
+
+          {animal.description && (
+            <div className="animal-detail-card">
+              <h3 className="section-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
                   <polyline points="14 2 14 8 20 8"></polyline>
                   <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -534,7 +611,7 @@ function AnimalProfile() {
                 </svg>
                 Description
               </h3>
-              <p className="card-content">{animal.color_markings}</p>
+              <p className="card-content" style={{ whiteSpace: 'pre-wrap' }}>{animal.description}</p>
             </div>
           )}
         </div>
@@ -666,6 +743,70 @@ function AnimalProfile() {
           </div>
         )}
 
+        {/* Weight Growth Chart */}
+        <WeightGrowthChart timeline={timeline} />
+
+        {/* AI Marketing Bio */}
+        <div className="animal-marketing-bio-card">
+          <div className="marketing-bio-header">
+            <div className="marketing-bio-title-group">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+              </svg>
+              <h3 className="section-title">AI Marketing Bio</h3>
+            </div>
+            <button
+              className="truepaws-button secondary"
+              onClick={generateMarketingBio}
+              disabled={bioLoading}
+            >
+              {bioLoading ? (
+                <><span className="truepaws-spinner"></span> Generating...</>
+              ) : marketingBio ? (
+                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg> Regenerate</>
+              ) : (
+                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Generate Bio</>
+              )}
+            </button>
+          </div>
+          {bioError && <p className="marketing-bio-error">{bioError}</p>}
+          {marketingBio && (
+            <div className="marketing-bio-content">
+              <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{marketingBio}</p>
+              <button
+                className={`truepaws-button secondary marketing-bio-copy ${bioCopied ? 'copied' : ''}`}
+                onClick={() => {
+                  navigator.clipboard.writeText(marketingBio).then(() => {
+                    setBioCopied(true);
+                    setTimeout(() => setBioCopied(false), 2000);
+                  });
+                }}
+              >
+                {bioCopied ? (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                    </svg>
+                    Copy to Clipboard
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+          {!marketingBio && !bioError && !bioLoading && (
+            <p className="marketing-bio-hint">Generate an AI-written marketing description for this animal, ready to use on your website or listings.</p>
+          )}
+        </div>
+
         {/* Timeline Section - Distinct Styling */}
         <div className="animal-timeline-section">
           <div className="section-header-with-icon">
@@ -681,17 +822,64 @@ function AnimalProfile() {
         {/* Pedigree Section */}
         {pedigree && (
           <div className="animal-pedigree-card">
-            <h3 className="section-title">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M5.52 19c.64-2.2 1.84-3 3.22-3h6.52c1.38 0 2.58.8 3.22 3"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-                <circle cx="12" cy="10" r="1"></circle>
-                <path d="M12 13v6"></path>
-                <path d="M12 3v4"></path>
-                <circle cx="12" cy="19" r="1"></circle>
-              </svg>
-              Pedigree
-            </h3>
+            <div className="pedigree-card-header">
+              <h3 className="section-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M5.52 19c.64-2.2 1.84-3 3.22-3h6.52c1.38 0 2.58.8 3.22 3"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                  <circle cx="12" cy="10" r="1"></circle>
+                  <path d="M12 13v6"></path>
+                  <path d="M12 3v4"></path>
+                  <circle cx="12" cy="19" r="1"></circle>
+                </svg>
+                Pedigree
+              </h3>
+              <button
+                type="button"
+                className="truepaws-button secondary"
+                onClick={async () => {
+                  try {
+                    const apiUrl = (window.truepawsData && window.truepawsData.apiUrl) || '';
+                    const response = await fetch(`${apiUrl}animals/${id}/generate-pedigree-pdf`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': (window.truepawsData && window.truepawsData.nonce) || ''
+                      }
+                    });
+                    const data = await response.json();
+
+                    if (response.ok && (data.pdf || data.html)) {
+                      const isPdf = Boolean(data.pdf);
+                      const content = isPdf ? data.pdf : data.html;
+                      const decoded = isPdf ? Uint8Array.from(atob(content), c => c.charCodeAt(0)) : content;
+                      const mimeType = isPdf ? 'application/pdf' : 'text/html';
+                      const blob = new Blob([decoded], { type: mimeType });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = data.filename || `pedigree-${(pedigree.animal && pedigree.animal.name) || animal.name}-${new Date().toISOString().split('T')[0]}.${isPdf ? 'pdf' : 'html'}`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                    } else {
+                      alert(data.message || 'Error generating pedigree certificate. Please try again.');
+                    }
+                  } catch (err) {
+                    console.error('Error:', err);
+                    alert('Error generating pedigree certificate. Please try again.');
+                  }
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Download Pedigree Certificate
+              </button>
+            </div>
             <div className="pedigree-info">
               <div className="pedigree-item primary">
                 <span className="pedigree-label">Animal</span>
@@ -748,7 +936,7 @@ function AnimalProfile() {
             </div>
           )}
           {!aiLoading && !aiError && aiCareAdvice?.content && (
-            <div className="ai-content" dangerouslySetInnerHTML={{ __html: formatAIContent(aiCareAdvice.content) }} />
+            <div className="ai-content" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(formatAIContent(aiCareAdvice.content)) }} />
           )}
           {!aiLoading && !aiError && aiCareAdvice?.enabled === false && (
             <div className="ai-disabled-state">

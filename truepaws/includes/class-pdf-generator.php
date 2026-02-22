@@ -493,4 +493,321 @@ class TruePaws_PDF_Generator {
             $pdf->Cell(0, 8, $reminder, 0, 1, 'L');
         }
     }
+
+    /**
+     * Generate pedigree certificate PDF
+     */
+    public static function generate_pedigree_certificate($animal_id) {
+        global $wpdb;
+
+        // Get animal data
+        $animal = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT a.*, s.name as sire_name, d.name as dam_name
+                 FROM {$wpdb->prefix}bm_animals a
+                 LEFT JOIN {$wpdb->prefix}bm_animals s ON a.sire_id = s.id
+                 LEFT JOIN {$wpdb->prefix}bm_animals d ON a.dam_id = d.id
+                 WHERE a.id = %d",
+                $animal_id
+            ),
+            ARRAY_A
+        );
+
+        if (!$animal) {
+            return false;
+        }
+
+        // Get pedigree data
+        $pedigree = truepaws_get_pedigree($animal_id, 3);
+
+        $filename_base = 'pedigree-' . sanitize_title($animal['name']) . '-' . date('Y-m-d');
+
+        // Try TCPDF first
+        if (class_exists('TCPDF')) {
+            try {
+                $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+                $pdf->SetCreator('TruePaws');
+                $pdf->SetAuthor(get_option('truepaws_breeder_name', ''));
+                $pdf->SetTitle('Pedigree Certificate - ' . $animal['name']);
+                $pdf->setPrintHeader(false);
+                $pdf->setPrintFooter(false);
+                $pdf->SetMargins(20, 20, 20);
+                $pdf->SetAutoPageBreak(true, 20);
+                $pdf->AddPage();
+
+                self::draw_pedigree_certificate($pdf, $animal, $pedigree);
+
+                $pdf_output = $pdf->Output($filename_base . '.pdf', 'S');
+
+                return array(
+                    'pdf' => base64_encode($pdf_output),
+                    'filename' => $filename_base . '.pdf'
+                );
+            } catch (Exception $e) {
+                // Fall through to HTML fallback
+            }
+        }
+
+        // HTML fallback when TCPDF is not available
+        $html = self::generate_pedigree_html($animal, $pedigree);
+
+        if (self::is_dompdf_available()) {
+            try {
+                $dompdf = new \Dompdf\Dompdf();
+                $dompdf->loadHtml($html);
+                $dompdf->setPaper('A4', 'portrait');
+                $dompdf->render();
+                $pdf_output = $dompdf->output();
+
+                return array(
+                    'pdf' => base64_encode($pdf_output),
+                    'filename' => $filename_base . '.pdf'
+                );
+            } catch (Exception $e) {
+                // Fall through to raw HTML
+            }
+        }
+
+        return array(
+            'html' => $html,
+            'filename' => $filename_base . '.html'
+        );
+    }
+
+    /**
+     * Generate pedigree certificate as styled HTML (fallback when no PDF library is available)
+     */
+    private static function generate_pedigree_html($animal, $pedigree) {
+        $breeder_name = get_option('truepaws_breeder_name', '');
+        $business_name = get_option('truepaws_business_name', '');
+
+        $sire = !empty($pedigree['generations']['sire']) ? $pedigree['generations']['sire'] : null;
+        $dam  = !empty($pedigree['generations']['dam'])  ? $pedigree['generations']['dam']  : null;
+
+        $sire_sire = $sire && !empty($sire['descendants']['sire']) ? $sire['descendants']['sire'] : null;
+        $sire_dam  = $sire && !empty($sire['descendants']['dam'])  ? $sire['descendants']['dam']  : null;
+        $dam_sire  = $dam  && !empty($dam['descendants']['sire'])  ? $dam['descendants']['sire']  : null;
+        $dam_dam   = $dam  && !empty($dam['descendants']['dam'])   ? $dam['descendants']['dam']   : null;
+
+        $esc = function($v) { return htmlspecialchars($v ?: '', ENT_QUOTES, 'UTF-8'); };
+
+        $cell = function($label, $data) use ($esc) {
+            $name = $data ? $esc($data['name']) : 'Unknown';
+            $reg  = ($data && !empty($data['registration_number'])) ? '<div class="cell-reg">' . $esc($data['registration_number']) . '</div>' : '';
+            $breed_line = ($data && !empty($data['breed'])) ? '<div class="cell-breed">' . $esc($data['breed']) . '</div>' : '';
+            return '<div class="ped-cell"><div class="cell-label">' . $esc($label) . '</div><div class="cell-name">' . $name . '</div>' . $reg . $breed_line . '</div>';
+        };
+
+        ob_start();
+        ?>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Pedigree Certificate - <?php echo $esc($animal['name']); ?></title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                @page { size: A4 portrait; margin: 12mm; }
+                body { font-family: 'Georgia', 'Times New Roman', serif; color: #2c2c2c; background: #fff; padding: 12mm; }
+                .certificate { border: 3px double #8b7355; padding: 30px; min-height: 267mm; position: relative; }
+                .header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid #8b7355; padding-bottom: 20px; }
+                .header h1 { font-size: 26px; letter-spacing: 3px; text-transform: uppercase; color: #4a3728; margin-bottom: 5px; }
+                .header .subtitle { font-size: 12px; color: #8b7355; letter-spacing: 2px; text-transform: uppercase; }
+                .animal-info { text-align: center; margin-bottom: 25px; }
+                .animal-info h2 { font-size: 22px; color: #2c2c2c; margin-bottom: 10px; }
+                .animal-info .meta { font-size: 11px; color: #666; line-height: 1.8; }
+                .animal-info .meta span { margin: 0 8px; }
+                .ped-title { text-align: center; font-size: 14px; font-weight: bold; color: #4a3728; margin-bottom: 15px; letter-spacing: 1px; text-transform: uppercase; }
+                .ped-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 25px; }
+                .ped-cell { border: 1px solid #c9b99a; padding: 10px 8px; text-align: center; background: #fdfbf7; min-height: 60px; display: flex; flex-direction: column; justify-content: center; }
+                .ped-cell.subject { grid-column: 1; grid-row: 1 / 5; background: #f5f0e6; border-color: #8b7355; border-width: 2px; }
+                .ped-cell.parent { grid-column: 2; }
+                .ped-cell.parent.sire { grid-row: 1 / 3; }
+                .ped-cell.parent.dam { grid-row: 3 / 5; }
+                .ped-cell.gp { grid-column: 3; }
+                .cell-label { font-size: 9px; color: #8b7355; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+                .cell-name { font-weight: bold; font-size: 12px; }
+                .cell-reg { font-size: 9px; color: #888; margin-top: 2px; font-style: italic; }
+                .cell-breed { font-size: 9px; color: #999; margin-top: 1px; }
+                .footer { position: absolute; bottom: 25px; left: 30px; right: 30px; text-align: center; font-size: 10px; color: #999; border-top: 1px solid #ddd; padding-top: 12px; }
+                .footer .breeder { font-size: 11px; color: #666; margin-bottom: 4px; }
+                @media print { body { padding: 0; } .certificate { border-width: 2px; } }
+            </style>
+        </head>
+        <body>
+            <div class="certificate">
+                <div class="header">
+                    <h1>Pedigree Certificate</h1>
+                    <?php if ($business_name): ?>
+                        <div class="subtitle"><?php echo $esc($business_name); ?></div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="animal-info">
+                    <h2><?php echo $esc($animal['name']); ?></h2>
+                    <div class="meta">
+                        <?php if (!empty($animal['registration_number'])): ?>
+                            <span>Reg: <?php echo $esc($animal['registration_number']); ?></span>
+                        <?php endif; ?>
+                        <?php if (!empty($animal['microchip_id'])): ?>
+                            <span>Microchip: <?php echo $esc($animal['microchip_id']); ?></span>
+                        <?php endif; ?>
+                        <span>Breed: <?php echo $esc($animal['breed'] ?: 'Unknown'); ?></span>
+                        <span>Sex: <?php echo $animal['sex'] === 'M' ? 'Male' : 'Female'; ?></span>
+                        <?php if (!empty($animal['birth_date'])): ?>
+                            <span>Born: <?php echo esc_html(date('F j, Y', strtotime($animal['birth_date']))); ?></span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="ped-title">Three Generation Pedigree</div>
+                <div class="ped-grid">
+                    <div class="ped-cell subject">
+                        <div class="cell-label">Subject</div>
+                        <div class="cell-name"><?php echo $esc($animal['name']); ?></div>
+                        <?php if (!empty($animal['registration_number'])): ?>
+                            <div class="cell-reg"><?php echo $esc($animal['registration_number']); ?></div>
+                        <?php endif; ?>
+                        <?php if (!empty($animal['breed'])): ?>
+                            <div class="cell-breed"><?php echo $esc($animal['breed']); ?></div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="ped-cell parent sire"><?php
+                        echo '<div class="cell-label">Sire</div>';
+                        echo '<div class="cell-name">' . ($sire ? $esc($sire['name']) : 'Unknown') . '</div>';
+                        if ($sire && !empty($sire['registration_number'])) echo '<div class="cell-reg">' . $esc($sire['registration_number']) . '</div>';
+                    ?></div>
+
+                    <div class="ped-cell gp"><?php
+                        echo '<div class="cell-label">Paternal GS</div>';
+                        echo '<div class="cell-name">' . ($sire_sire ? $esc($sire_sire['name']) : 'Unknown') . '</div>';
+                        if ($sire_sire && !empty($sire_sire['registration_number'])) echo '<div class="cell-reg">' . $esc($sire_sire['registration_number']) . '</div>';
+                    ?></div>
+                    <div class="ped-cell gp"><?php
+                        echo '<div class="cell-label">Paternal GD</div>';
+                        echo '<div class="cell-name">' . ($sire_dam ? $esc($sire_dam['name']) : 'Unknown') . '</div>';
+                        if ($sire_dam && !empty($sire_dam['registration_number'])) echo '<div class="cell-reg">' . $esc($sire_dam['registration_number']) . '</div>';
+                    ?></div>
+
+                    <div class="ped-cell parent dam"><?php
+                        echo '<div class="cell-label">Dam</div>';
+                        echo '<div class="cell-name">' . ($dam ? $esc($dam['name']) : 'Unknown') . '</div>';
+                        if ($dam && !empty($dam['registration_number'])) echo '<div class="cell-reg">' . $esc($dam['registration_number']) . '</div>';
+                    ?></div>
+
+                    <div class="ped-cell gp"><?php
+                        echo '<div class="cell-label">Maternal GS</div>';
+                        echo '<div class="cell-name">' . ($dam_sire ? $esc($dam_sire['name']) : 'Unknown') . '</div>';
+                        if ($dam_sire && !empty($dam_sire['registration_number'])) echo '<div class="cell-reg">' . $esc($dam_sire['registration_number']) . '</div>';
+                    ?></div>
+                    <div class="ped-cell gp"><?php
+                        echo '<div class="cell-label">Maternal GD</div>';
+                        echo '<div class="cell-name">' . ($dam_dam ? $esc($dam_dam['name']) : 'Unknown') . '</div>';
+                        if ($dam_dam && !empty($dam_dam['registration_number'])) echo '<div class="cell-reg">' . $esc($dam_dam['registration_number']) . '</div>';
+                    ?></div>
+                </div>
+
+                <div class="footer">
+                    <?php if ($breeder_name): ?>
+                        <div class="breeder">Breeder: <?php echo $esc($breeder_name); ?></div>
+                    <?php endif; ?>
+                    <div>Certificate generated on <?php echo date('F j, Y'); ?> &mdash; Powered by TruePaws</div>
+                </div>
+            </div>
+        </body>
+        </html>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Draw pedigree certificate
+     */
+    private static function draw_pedigree_certificate($pdf, $animal, $pedigree) {
+        // Header/Title
+        $pdf->SetFont('helvetica', 'B', 24);
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->Cell(0, 20, 'PEDIGREE CERTIFICATE', 0, 1, 'C');
+
+        // Border decoration
+        $pdf->SetDrawColor(200, 200, 200);
+        $pdf->SetLineWidth(0.5);
+        $pdf->Rect(15, 15, 180, 267);
+
+        $pdf->Ln(10);
+
+        // Animal info
+        $pdf->SetFont('helvetica', 'B', 18);
+        $pdf->Cell(0, 15, $animal['name'], 0, 1, 'C');
+
+        $pdf->SetFont('helvetica', '', 12);
+        $pdf->SetTextColor(100, 100, 100);
+        
+        if (!empty($animal['registration_number'])) {
+            $pdf->Cell(0, 8, 'Registration: ' . $animal['registration_number'], 0, 1, 'C');
+        }
+        
+        if (!empty($animal['microchip_id'])) {
+            $pdf->Cell(0, 8, 'Microchip: ' . $animal['microchip_id'], 0, 1, 'C');
+        }
+
+        $pdf->Cell(0, 8, 'Breed: ' . ($animal['breed'] ?: 'Unknown'), 0, 1, 'C');
+        $pdf->Cell(0, 8, 'Sex: ' . ($animal['sex'] === 'M' ? 'Male' : 'Female'), 0, 1, 'C');
+        
+        if (!empty($animal['birth_date'])) {
+            $pdf->Cell(0, 8, 'Born: ' . date('F j, Y', strtotime($animal['birth_date'])), 0, 1, 'C');
+        }
+
+        $pdf->Ln(15);
+
+        // Pedigree tree
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->SetFont('helvetica', 'B', 14);
+        $pdf->Cell(0, 12, 'Three Generation Pedigree', 0, 1, 'C');
+
+        $pdf->SetFont('helvetica', '', 10);
+        
+        // Generation 1 (Parents)
+        $y_start = $pdf->GetY() + 10;
+        
+        if (!empty($pedigree['generations']['sire'])) {
+            $pdf->SetXY(100, $y_start);
+            $pdf->Cell(80, 8, 'Sire: ' . $pedigree['generations']['sire']['name'], 0, 1, 'L');
+            if (!empty($pedigree['generations']['sire']['registration_number'])) {
+                $pdf->SetX(100);
+                $pdf->SetFont('helvetica', 'I', 8);
+                $pdf->Cell(80, 6, 'Reg: ' . $pedigree['generations']['sire']['registration_number'], 0, 1, 'L');
+                $pdf->SetFont('helvetica', '', 10);
+            }
+        }
+
+        $pdf->Ln(5);
+
+        if (!empty($pedigree['generations']['dam'])) {
+            $pdf->SetX(100);
+            $pdf->Cell(80, 8, 'Dam: ' . $pedigree['generations']['dam']['name'], 0, 1, 'L');
+            if (!empty($pedigree['generations']['dam']['registration_number'])) {
+                $pdf->SetX(100);
+                $pdf->SetFont('helvetica', 'I', 8);
+                $pdf->Cell(80, 6, 'Reg: ' . $pedigree['generations']['dam']['registration_number'], 0, 1, 'L');
+                $pdf->SetFont('helvetica', '', 10);
+            }
+        }
+
+        $pdf->Ln(10);
+
+        // Footer
+        $pdf->SetY(-40);
+        $pdf->SetFont('helvetica', 'I', 9);
+        $pdf->SetTextColor(120, 120, 120);
+        
+        $breeder_name = get_option('truepaws_breeder_name', '');
+        if ($breeder_name) {
+            $pdf->Cell(0, 6, 'Breeder: ' . $breeder_name, 0, 1, 'C');
+        }
+        
+        $pdf->Cell(0, 6, 'Certificate generated: ' . date('F j, Y'), 0, 1, 'C');
+        $pdf->Cell(0, 6, 'Powered by TruePaws', 0, 1, 'C');
+    }
 }

@@ -15,7 +15,9 @@ class TruePaws_Deactivator {
      * Plugin deactivation
      */
     public static function deactivate() {
-        // Clear any scheduled events if they existed
+        // Clear scheduled events
+        TruePaws_Notifications::clear_scheduled_events();
+        
         // Flush rewrite rules
         flush_rewrite_rules();
     }

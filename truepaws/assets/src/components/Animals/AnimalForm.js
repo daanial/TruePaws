@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { animalsAPI } from '../../api/client';
+import { animalsAPI, settingsAPI } from '../../api/client';
 import Layout from '../shared/Layout';
 import AnimalImagePlaceholder from '../shared/AnimalImagePlaceholder';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import MultiPhotoUploader from './MultiPhotoUploader';
 
 function MediaUploader({ value, onChange, label = "Featured Image", imageUrlFallback }) {
   const [imageUrl, setImageUrl] = useState('');
@@ -25,15 +26,7 @@ function MediaUploader({ value, onChange, label = "Featured Image", imageUrlFall
   }, [value, imageUrlFallback]);
 
   const openMediaLibrary = () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/631041ab-453e-49a6-a050-6d6b6bc20d6e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MediaUploader:openMediaLibrary:entry',message:'Opening media library',data:{wpExists:!!window.wp,mediaExists:!!(window.wp && window.wp.media)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'I,J'})}).catch(()=>{});
-    // #endregion
-    
     if (!window.wp || !window.wp.media) {
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/631041ab-453e-49a6-a050-6d6b6bc20d6e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MediaUploader:openMediaLibrary:error',message:'WP media not available',data:{wp:!!window.wp},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'I'})}).catch(()=>{});
-      // #endregion
-      
       alert('WordPress media library not available');
       return;
     }
@@ -46,11 +39,6 @@ function MediaUploader({ value, onChange, label = "Featured Image", imageUrlFall
 
     mediaFrame.on('select', () => {
       const attachment = mediaFrame.state().get('selection').first().toJSON();
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/631041ab-453e-49a6-a050-6d6b6bc20d6e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MediaUploader:openMediaLibrary:selected',message:'Image selected',data:{attachmentId:attachment.id,url:attachment.url},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'I,J'})}).catch(()=>{});
-      // #endregion
-      
       onChange(attachment.id);
       setImageUrl(attachment.url);
     });
@@ -111,6 +99,7 @@ function AnimalForm() {
     microchip_id: '',
     breed: '',
     color_markings: '',
+    description: '',
     sex: 'M',
     sire_id: '',
     dam_id: '',
@@ -120,11 +109,14 @@ function AnimalForm() {
     featured_image_url: ''
   });
   const [parents, setParents] = useState([]);
+  const [breeds, setBreeds] = useState([]);
+  const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(isEditMode);
 
   useEffect(() => {
     loadParents();
+    loadBreeds();
   }, []);
 
   useEffect(() => {
@@ -144,6 +136,7 @@ function AnimalForm() {
         microchip_id: animal.microchip_id || '',
         breed: animal.breed || '',
         color_markings: animal.color_markings || '',
+        description: animal.description || '',
         sex: animal.sex || 'M',
         sire_id: animal.sire_id || '',
         dam_id: animal.dam_id || '',
@@ -152,6 +145,7 @@ function AnimalForm() {
         featured_image_id: animal.featured_image_id || '',
         featured_image_url: animal.featured_image_url || ''
       });
+      setPhotos(animal.photos || []);
     } catch (error) {
       console.error('Error loading animal:', error);
       alert('Error loading animal: ' + (error.response?.data?.message || error.message));
@@ -167,6 +161,17 @@ function AnimalForm() {
       setParents(response.data.animals || []);
     } catch (error) {
       console.error('Error loading parents:', error);
+    }
+  };
+
+  const loadBreeds = async () => {
+    try {
+      const response = await settingsAPI.getBreeds();
+      if (response.data.success) {
+        setBreeds(response.data.breeds || []);
+      }
+    } catch (error) {
+      console.error('Error loading breeds:', error);
     }
   };
 
@@ -263,12 +268,12 @@ function AnimalForm() {
         <div className="truepaws-form-row">
           <div className="truepaws-form-group">
             <label>Breed</label>
-            <input
-              type="text"
-              name="breed"
-              value={formData.breed}
-              onChange={handleChange}
-            />
+            <select name="breed" value={formData.breed} onChange={handleChange}>
+              <option value="">Select breed...</option>
+              {breeds.map((breed) => (
+                <option key={breed.id} value={breed.name}>{breed.name}</option>
+              ))}
+            </select>
           </div>
           <div className="truepaws-form-group">
             <label>Sex *</label>
@@ -332,11 +337,30 @@ function AnimalForm() {
           />
         </div>
 
+        <div className="truepaws-form-group">
+          <label>Description</label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            rows="5"
+            placeholder="Write a longer description about this animal..."
+          />
+        </div>
+
         <MediaUploader
           value={formData.featured_image_id}
           onChange={(id) => setFormData(prev => ({...prev, featured_image_id: id}))}
           imageUrlFallback={formData.featured_image_url}
         />
+
+        {isEditMode && id && (
+          <MultiPhotoUploader
+            animalId={id}
+            photos={photos}
+            onPhotosChange={setPhotos}
+          />
+        )}
 
         <div className="truepaws-form-actions">
           <button type="submit" className="truepaws-button" disabled={loading}>

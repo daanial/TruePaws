@@ -90,7 +90,24 @@ function ContactProfile() {
         {contact.notes && (
           <div className="contact-detail-card">
             <h3 className="section-title">Notes</h3>
-            <p className="card-content">{contact.notes}</p>
+            <p className="card-content" style={{ whiteSpace: 'pre-wrap' }}>{contact.notes}</p>
+          </div>
+        )}
+
+        {/* Inquired About Section - Animals from inquiry form shortcode */}
+        {(contact.inquiry_animals || []).length > 0 && (
+          <div className="contact-detail-card inquiry-animals-card">
+            <h3 className="section-title">Inquired About</h3>
+            <p className="card-description">This contact submitted an inquiry about the following animal(s) via the website form.</p>
+            <div className="inquiry-animals-grid">
+              {(contact.inquiry_animals || []).map((animal) => (
+                <Link key={animal.id} to={`/animals/${animal.id}`} className="inquiry-animal-card">
+                  <span className="inquiry-animal-name">{animal.name}</span>
+                  {animal.breed && <span className="inquiry-animal-breed">{animal.breed}</span>}
+                  <span className="inquiry-animal-id">ID: {animal.id}</span>
+                </Link>
+              ))}
+            </div>
           </div>
         )}
 

@@ -242,6 +242,15 @@ class TruePaws_Admin_Menu {
                 'default' => '#contact'
             )
         );
+        register_setting(
+            'truepaws_settings_group',
+            'truepaws_webhook_url',
+            array(
+                'type' => 'string',
+                'sanitize_callback' => 'esc_url_raw',
+                'default' => ''
+            )
+        );
 
         // Breeds management (stored as JSON)
         register_setting(
