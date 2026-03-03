@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { format, formatDistanceToNow } from 'date-fns';
+import { __, _n, sprintf } from '@wordpress/i18n';
 
 function LatestEvents({ events, loading }) {
   const getEventIcon = (eventType) => {
@@ -21,16 +22,16 @@ function LatestEvents({ events, loading }) {
 
   const getEventTypeLabel = (eventType) => {
     const labels = {
-      birth: 'Birth',
-      vaccine: 'Vaccination',
-      heat: 'Heat Cycle',
-      mating: 'Mating',
-      whelping: 'Whelping',
-      weight: 'Weight',
-      vet_visit: 'Vet Visit',
-      note: 'Note',
-      sold: 'Sold',
-      registration: 'Registration',
+      birth: __('Birth', 'truepaws'),
+      vaccine: __('Vaccination', 'truepaws'),
+      heat: __('Heat Cycle', 'truepaws'),
+      mating: __('Mating', 'truepaws'),
+      whelping: __('Whelping', 'truepaws'),
+      weight: __('Weight', 'truepaws'),
+      vet_visit: __('Vet Visit', 'truepaws'),
+      note: __('Note', 'truepaws'),
+      sold: __('Sold', 'truepaws'),
+      registration: __('Registration', 'truepaws'),
     };
     return labels[eventType] || eventType;
   };
@@ -54,9 +55,9 @@ function LatestEvents({ events, loading }) {
   if (loading) {
     return (
       <div className="latest-events">
-        <h3 className="card-title">Latest Events</h3>
+        <h3 className="card-title">{__('Latest Events', 'truepaws')}</h3>
         <div className="events-loading">
-          <p>Loading events...</p>
+          <p>{__('Loading events...', 'truepaws')}</p>
         </div>
       </div>
     );
@@ -65,9 +66,9 @@ function LatestEvents({ events, loading }) {
   if (!events || events.length === 0) {
     return (
       <div className="latest-events">
-        <h3 className="card-title">Latest Events</h3>
+        <h3 className="card-title">{__('Latest Events', 'truepaws')}</h3>
         <div className="events-empty">
-          <p>No recent events to display.</p>
+          <p>{__('No recent events to display.', 'truepaws')}</p>
         </div>
       </div>
     );
@@ -75,7 +76,7 @@ function LatestEvents({ events, loading }) {
 
   return (
     <div className="latest-events">
-      <h3 className="card-title">Latest Events</h3>
+      <h3 className="card-title">{__('Latest Events', 'truepaws')}</h3>
       <div className="events-list">
         {events.map((event) => {
           const eventDate = new Date(event.date);
@@ -107,7 +108,7 @@ function LatestEvents({ events, loading }) {
                   )}
                   {event.meta_data && event.meta_data.puppy_count && (
                     <span className="event-meta">
-                      {event.meta_data.puppy_count} {event.meta_data.puppy_count === 1 ? 'puppy' : 'puppies'}
+                      {sprintf(_n('%s puppy', '%s puppies', event.meta_data.puppy_count, 'truepaws'), event.meta_data.puppy_count)}
                     </span>
                   )}
                 </div>

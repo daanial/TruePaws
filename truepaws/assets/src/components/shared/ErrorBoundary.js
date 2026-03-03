@@ -1,4 +1,5 @@
 import React from 'react';
+import { __ } from '@wordpress/i18n';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -41,27 +42,27 @@ class ErrorBoundary extends React.Component {
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
             
-            <h2>Something went wrong</h2>
-            <p>We're sorry, but something unexpected happened. Please try refreshing the page.</p>
+            <h2>{__('Something went wrong', 'truepaws')}</h2>
+            <p>{__("We're sorry, but something unexpected happened. Please try refreshing the page.", 'truepaws')}</p>
             
             <div className="error-actions">
               <button 
                 className="truepaws-button" 
                 onClick={() => window.location.reload()}
               >
-                Refresh Page
+                {__('Refresh Page', 'truepaws')}
               </button>
               <button 
                 className="truepaws-button secondary" 
                 onClick={() => this.setState({ hasError: false, error: null, errorInfo: null })}
               >
-                Try Again
+                {__('Try Again', 'truepaws')}
               </button>
             </div>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="error-details">
-                <summary>Error Details (Development Only)</summary>
+                <summary>{__('Error Details (Development Only)', 'truepaws')}</summary>
                 <pre>{this.state.error.toString()}</pre>
                 <pre>{this.state.errorInfo?.componentStack}</pre>
               </details>

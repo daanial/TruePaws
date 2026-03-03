@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { __ } from '@wordpress/i18n';
 import { animalsAPI, settingsAPI } from '../../api/client';
 import Layout from '../shared/Layout';
 import LoadingSpinner from '../shared/LoadingSpinner';
@@ -85,24 +86,31 @@ function AnimalList() {
       deceased: 'truepaws-status deceased',
       'co-owned': 'truepaws-status'
     };
+    const statusLabels = {
+      active: __('Active', 'truepaws'),
+      retired: __('Retired', 'truepaws'),
+      sold: __('Sold', 'truepaws'),
+      deceased: __('Deceased', 'truepaws'),
+      'co-owned': __('Co-owned', 'truepaws'),
+    };
 
     return (
       <span className={statusClasses[status] || 'truepaws-status'}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {statusLabels[status] || status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
   };
 
   if (loading) {
-    return <LoadingSpinner message="Loading animals..." />;
+    return <LoadingSpinner message={__('Loading animals...', 'truepaws')} />;
   }
 
   return (
     <Layout
-      title="Animals"
+      title={__('Animals', 'truepaws')}
       actions={
         <Link to="/animals/new" className="truepaws-button">
-          Add New Animal
+          {__('Add New Animal', 'truepaws')}
         </Link>
       }
     >
@@ -111,7 +119,7 @@ function AnimalList() {
           <div className="truepaws-form-group">
             <input
               type="text"
-              placeholder="Search name, registration..."
+              placeholder={__('Search name, registration...', 'truepaws')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="truepaws-form-control"
@@ -120,11 +128,11 @@ function AnimalList() {
           <div className="truepaws-form-group">
             <input
               type="text"
-              placeholder="Microchip #"
+              placeholder={__('Microchip #', 'truepaws')}
               value={microchipSearch}
               onChange={(e) => setMicrochipSearch(e.target.value)}
               className="truepaws-form-control"
-              title="Quick lookup by microchip number"
+              title={__('Quick lookup by microchip number', 'truepaws')}
             />
           </div>
           <div className="truepaws-form-group">
@@ -133,12 +141,12 @@ function AnimalList() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="truepaws-form-control"
             >
-              <option value="">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="retired">Retired</option>
-              <option value="sold">Sold</option>
-              <option value="deceased">Deceased</option>
-              <option value="co-owned">Co-owned</option>
+              <option value="">{__('All Statuses', 'truepaws')}</option>
+              <option value="active">{__('Active', 'truepaws')}</option>
+              <option value="retired">{__('Retired', 'truepaws')}</option>
+              <option value="sold">{__('Sold', 'truepaws')}</option>
+              <option value="deceased">{__('Deceased', 'truepaws')}</option>
+              <option value="co-owned">{__('Co-owned', 'truepaws')}</option>
             </select>
           </div>
           <div className="truepaws-form-group">
@@ -147,14 +155,14 @@ function AnimalList() {
               onChange={(e) => setBreedFilter(e.target.value)}
               className="truepaws-form-control"
             >
-              <option value="">All Breeds</option>
+              <option value="">{__('All Breeds', 'truepaws')}</option>
               {breeds.map((b) => (
                 <option key={b.id} value={b.name}>{b.name}</option>
               ))}
             </select>
           </div>
           <div className="truepaws-form-group">
-            <button type="submit" className="truepaws-button">Search</button>
+            <button type="submit" className="truepaws-button">{__('Search', 'truepaws')}</button>
           </div>
         </form>
       </div>
@@ -163,14 +171,14 @@ function AnimalList() {
         <table className="truepaws-table">
           <thead>
             <tr>
-              <th className="truepaws-table-thumb">Photo</th>
-              <th>Name</th>
-              <th>Registration</th>
-              <th>Microchip</th>
-              <th>Breed</th>
-              <th>Sex</th>
-              <th>Status</th>
-              <th>Actions</th>
+              <th className="truepaws-table-thumb">{__('Photo', 'truepaws')}</th>
+              <th>{__('Name', 'truepaws')}</th>
+              <th>{__('Registration', 'truepaws')}</th>
+              <th>{__('Microchip', 'truepaws')}</th>
+              <th>{__('Breed', 'truepaws')}</th>
+              <th>{__('Sex', 'truepaws')}</th>
+              <th>{__('Status', 'truepaws')}</th>
+              <th>{__('Actions', 'truepaws')}</th>
             </tr>
           </thead>
           <tbody>
@@ -192,11 +200,11 @@ function AnimalList() {
                 <td>{animal.registration_number}</td>
                 <td>{animal.microchip_id || '—'}</td>
                 <td>{animal.breed}</td>
-                <td>{animal.sex === 'M' ? 'Male' : 'Female'}</td>
+                <td>{animal.sex === 'M' ? __('Male', 'truepaws') : __('Female', 'truepaws')}</td>
                 <td>{getStatusBadge(animal.status)}</td>
                 <td>
                   <Link to={`/animals/${animal.id}`} className="truepaws-button secondary">
-                    View
+                    {__('View', 'truepaws')}
                   </Link>
                 </td>
               </tr>
@@ -206,7 +214,7 @@ function AnimalList() {
 
         {animals.length === 0 && (
           <div className="truepaws-empty-state">
-            <p>No animals found. <Link to="/animals/new">Add your first animal</Link></p>
+            <p>{__('No animals found.', 'truepaws')} <Link to="/animals/new">{__('Add your first animal', 'truepaws')}</Link></p>
           </div>
         )}
       </div>

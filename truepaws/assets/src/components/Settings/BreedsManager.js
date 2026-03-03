@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { __, sprintf } from '@wordpress/i18n';
 import { settingsAPI } from '../../api/client';
 
 function BreedsManager({ breeds, onBreedsChange }) {
@@ -10,7 +11,7 @@ function BreedsManager({ breeds, onBreedsChange }) {
     e.preventDefault();
     
     if (!newBreed.trim()) {
-      setError('Breed name is required');
+      setError(__('Breed name is required', 'truepaws'));
       return;
     }
 
@@ -20,7 +21,7 @@ function BreedsManager({ breeds, onBreedsChange }) {
     );
     
     if (duplicate) {
-      setError('This breed already exists');
+      setError(__('This breed already exists', 'truepaws'));
       return;
     }
 
@@ -38,14 +39,14 @@ function BreedsManager({ breeds, onBreedsChange }) {
         }
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add breed');
+      setError(err.response?.data?.message || __('Failed to add breed', 'truepaws'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteBreed = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this breed?')) {
+    if (!window.confirm(__('Are you sure you want to delete this breed?', 'truepaws'))) {
       return;
     }
 
@@ -62,7 +63,7 @@ function BreedsManager({ breeds, onBreedsChange }) {
         }
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete breed');
+      setError(err.response?.data?.message || __('Failed to delete breed', 'truepaws'));
     } finally {
       setLoading(false);
     }
@@ -72,11 +73,11 @@ function BreedsManager({ breeds, onBreedsChange }) {
     <div className="breeds-manager">
       <div className="breeds-add-form">
         <p className="description">
-          Manage your breed list. These breeds will be available in the dropdown when creating or editing animals.
+          {__('Manage your breed list. These breeds will be available in the dropdown when creating or editing animals.', 'truepaws')}
         </p>
         <form onSubmit={handleAddBreed}>
           <div className="truepaws-form-group">
-            <label>Add New Breed</label>
+            <label>{__('Add New Breed', 'truepaws')}</label>
             <div className="breed-input-group">
               <input
                 type="text"
@@ -85,7 +86,7 @@ function BreedsManager({ breeds, onBreedsChange }) {
                   setNewBreed(e.target.value);
                   setError('');
                 }}
-                placeholder="Enter breed name (e.g., Golden Retriever)"
+                placeholder={__('Enter breed name (e.g., Golden Retriever)', 'truepaws')}
                 disabled={loading}
                 className={error ? 'error' : ''}
               />
@@ -94,7 +95,7 @@ function BreedsManager({ breeds, onBreedsChange }) {
                 className="truepaws-button"
                 disabled={loading || !newBreed.trim()}
               >
-                {loading ? 'Adding...' : 'Add Breed'}
+                {loading ? __('Adding...', 'truepaws') : __('Add Breed', 'truepaws')}
               </button>
             </div>
             {error && <div className="truepaws-error">{error}</div>}
@@ -103,10 +104,10 @@ function BreedsManager({ breeds, onBreedsChange }) {
       </div>
 
       <div className="breeds-list">
-        <h4>Your Breeds ({breeds.length})</h4>
+        <h4>{sprintf(__('Your Breeds (%s)', 'truepaws'), breeds.length)}</h4>
         {breeds.length === 0 ? (
           <div className="breeds-empty">
-            <p>No breeds added yet. Add your first breed above.</p>
+            <p>{__('No breeds added yet. Add your first breed above.', 'truepaws')}</p>
           </div>
         ) : (
           <ul className="breeds-list-items">
@@ -122,7 +123,7 @@ function BreedsManager({ breeds, onBreedsChange }) {
                   onClick={() => handleDeleteBreed(breed.id)}
                   disabled={loading}
                 >
-                  Delete
+                  {__('Delete', 'truepaws')}
                 </button>
               </li>
             ))}

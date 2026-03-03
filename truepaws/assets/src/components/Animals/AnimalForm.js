@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { __, sprintf } from '@wordpress/i18n';
 import { animalsAPI, settingsAPI } from '../../api/client';
 import Layout from '../shared/Layout';
 import AnimalImagePlaceholder from '../shared/AnimalImagePlaceholder';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import MultiPhotoUploader from './MultiPhotoUploader';
 
-function MediaUploader({ value, onChange, label = "Featured Image", imageUrlFallback }) {
+function MediaUploader({ value, onChange, label, imageUrlFallback }) {
   const [imageUrl, setImageUrl] = useState('');
   const [imageError, setImageError] = useState(false);
 
@@ -27,13 +28,13 @@ function MediaUploader({ value, onChange, label = "Featured Image", imageUrlFall
 
   const openMediaLibrary = () => {
     if (!window.wp || !window.wp.media) {
-      alert('WordPress media library not available');
+      alert(__('WordPress media library not available', 'truepaws'));
       return;
     }
 
     const mediaFrame = window.wp.media({
-      title: 'Select Featured Image',
-      button: { text: 'Use this image' },
+      title: __('Select Featured Image', 'truepaws'),
+      button: { text: __('Use this image', 'truepaws') },
       multiple: false
     });
 
@@ -55,13 +56,13 @@ function MediaUploader({ value, onChange, label = "Featured Image", imageUrlFall
 
   return (
     <div className="media-uploader">
-      <label>{label}</label>
+      <label>{label || __('Featured Image', 'truepaws')}</label>
       <div className="media-uploader-content">
         {showPlaceholder ? (
           <div className="media-placeholder">
             <AnimalImagePlaceholder className="media-placeholder-image" />
             <button type="button" onClick={openMediaLibrary} className="truepaws-button">
-              Select Image
+              {__('Select Image', 'truepaws')}
             </button>
           </div>
         ) : (
@@ -74,10 +75,10 @@ function MediaUploader({ value, onChange, label = "Featured Image", imageUrlFall
             />
             <div className="media-actions">
               <button type="button" onClick={openMediaLibrary} className="truepaws-button secondary">
-                Change
+                {__('Change', 'truepaws')}
               </button>
               <button type="button" onClick={removeImage} className="truepaws-button danger">
-                Remove
+                {__('Remove', 'truepaws')}
               </button>
             </div>
           </div>
@@ -148,7 +149,7 @@ function AnimalForm() {
       setPhotos(animal.photos || []);
     } catch (error) {
       console.error('Error loading animal:', error);
-      alert('Error loading animal: ' + (error.response?.data?.message || error.message));
+      alert(sprintf(__('Error loading animal: %s', 'truepaws'), error.response?.data?.message || error.message));
       navigate('/animals');
     } finally {
       setInitialLoading(false);
@@ -197,7 +198,7 @@ function AnimalForm() {
       }
     } catch (error) {
       console.error('Error saving animal:', error);
-      alert('Error saving animal: ' + (error.response?.data?.message || error.message));
+      alert(sprintf(__('Error saving animal: %s', 'truepaws'), error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -216,15 +217,15 @@ function AnimalForm() {
   };
 
   if (initialLoading) {
-    return <LoadingSpinner message="Loading animal..." />;
+    return <LoadingSpinner message={__('Loading animal...', 'truepaws')} />;
   }
 
   return (
-    <Layout title={isEditMode ? 'Edit Animal' : 'Add New Animal'}>
+    <Layout title={isEditMode ? __('Edit Animal', 'truepaws') : __('Add New Animal', 'truepaws')}>
       <form onSubmit={handleSubmit} className="truepaws-form">
         <div className="truepaws-form-row">
           <div className="truepaws-form-group">
-            <label>Name *</label>
+            <label>{__('Name', 'truepaws')} *</label>
             <input
               type="text"
               name="name"
@@ -234,7 +235,7 @@ function AnimalForm() {
             />
           </div>
           <div className="truepaws-form-group">
-            <label>Call Name</label>
+            <label>{__('Call Name', 'truepaws')}</label>
             <input
               type="text"
               name="call_name"
@@ -246,7 +247,7 @@ function AnimalForm() {
 
         <div className="truepaws-form-row">
           <div className="truepaws-form-group">
-            <label>Registration Number</label>
+            <label>{__('Registration Number', 'truepaws')}</label>
             <input
               type="text"
               name="registration_number"
@@ -255,7 +256,7 @@ function AnimalForm() {
             />
           </div>
           <div className="truepaws-form-group">
-            <label>Microchip ID</label>
+            <label>{__('Microchip ID', 'truepaws')}</label>
             <input
               type="text"
               name="microchip_id"
@@ -267,37 +268,37 @@ function AnimalForm() {
 
         <div className="truepaws-form-row">
           <div className="truepaws-form-group">
-            <label>Breed</label>
+            <label>{__('Breed', 'truepaws')}</label>
             <select name="breed" value={formData.breed} onChange={handleChange}>
-              <option value="">Select breed...</option>
+              <option value="">{__('Select breed...', 'truepaws')}</option>
               {breeds.map((breed) => (
                 <option key={breed.id} value={breed.name}>{breed.name}</option>
               ))}
             </select>
           </div>
           <div className="truepaws-form-group">
-            <label>Sex *</label>
+            <label>{__('Sex', 'truepaws')} *</label>
             <select name="sex" value={formData.sex} onChange={handleChange} required>
-              <option value="M">Male</option>
-              <option value="F">Female</option>
+              <option value="M">{__('Male', 'truepaws')}</option>
+              <option value="F">{__('Female', 'truepaws')}</option>
             </select>
           </div>
         </div>
 
         <div className="truepaws-form-row">
           <div className="truepaws-form-group">
-            <label>Sire (Father)</label>
+            <label>{__('Sire (Father)', 'truepaws')}</label>
             <select name="sire_id" value={formData.sire_id} onChange={handleChange}>
-              <option value="">Select sire...</option>
+              <option value="">{__('Select sire...', 'truepaws')}</option>
               {getParentOptions(formData.dam_id).map(parent => (
                 <option key={parent.id} value={parent.id}>{parent.name}</option>
               ))}
             </select>
           </div>
           <div className="truepaws-form-group">
-            <label>Dam (Mother)</label>
+            <label>{__('Dam (Mother)', 'truepaws')}</label>
             <select name="dam_id" value={formData.dam_id} onChange={handleChange}>
-              <option value="">Select dam...</option>
+              <option value="">{__('Select dam...', 'truepaws')}</option>
               {getParentOptions(formData.sire_id).map(parent => (
                 <option key={parent.id} value={parent.id}>{parent.name}</option>
               ))}
@@ -307,7 +308,7 @@ function AnimalForm() {
 
         <div className="truepaws-form-row">
           <div className="truepaws-form-group">
-            <label>Birth Date</label>
+            <label>{__('Birth Date', 'truepaws')}</label>
             <input
               type="date"
               name="birth_date"
@@ -316,19 +317,19 @@ function AnimalForm() {
             />
           </div>
           <div className="truepaws-form-group">
-            <label>Status</label>
+            <label>{__('Status', 'truepaws')}</label>
             <select name="status" value={formData.status} onChange={handleChange}>
-              <option value="active">Active</option>
-              <option value="retired">Retired</option>
-              <option value="sold">Sold</option>
-              <option value="deceased">Deceased</option>
-              <option value="co-owned">Co-owned</option>
+              <option value="active">{__('Active', 'truepaws')}</option>
+              <option value="retired">{__('Retired', 'truepaws')}</option>
+              <option value="sold">{__('Sold', 'truepaws')}</option>
+              <option value="deceased">{__('Deceased', 'truepaws')}</option>
+              <option value="co-owned">{__('Co-owned', 'truepaws')}</option>
             </select>
           </div>
         </div>
 
         <div className="truepaws-form-group">
-          <label>Color/Markings</label>
+          <label>{__('Color/Markings', 'truepaws')}</label>
           <textarea
             name="color_markings"
             value={formData.color_markings}
@@ -338,13 +339,13 @@ function AnimalForm() {
         </div>
 
         <div className="truepaws-form-group">
-          <label>Description</label>
+          <label>{__('Description', 'truepaws')}</label>
           <textarea
             name="description"
             value={formData.description}
             onChange={handleChange}
             rows="5"
-            placeholder="Write a longer description about this animal..."
+            placeholder={__('Write a longer description about this animal...', 'truepaws')}
           />
         </div>
 
@@ -352,6 +353,7 @@ function AnimalForm() {
           value={formData.featured_image_id}
           onChange={(id) => setFormData(prev => ({...prev, featured_image_id: id}))}
           imageUrlFallback={formData.featured_image_url}
+          label={__('Featured Image', 'truepaws')}
         />
 
         {isEditMode && id && (
@@ -364,10 +366,10 @@ function AnimalForm() {
 
         <div className="truepaws-form-actions">
           <button type="submit" className="truepaws-button" disabled={loading}>
-            {loading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Animal' : 'Create Animal')}
+            {loading ? (isEditMode ? __('Updating...', 'truepaws') : __('Creating...', 'truepaws')) : (isEditMode ? __('Update Animal', 'truepaws') : __('Create Animal', 'truepaws'))}
           </button>
           <button type="button" className="truepaws-button secondary" onClick={() => navigate(isEditMode ? `/animals/${id}` : '/animals')}>
-            Cancel
+            {__('Cancel', 'truepaws')}
           </button>
         </div>
       </form>

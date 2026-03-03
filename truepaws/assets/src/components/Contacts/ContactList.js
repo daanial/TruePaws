@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { contactsAPI } from '../../api/client';
 import Layout from '../shared/Layout';
 import LoadingSpinner from '../shared/LoadingSpinner';
@@ -36,7 +37,7 @@ function ContactList() {
   };
 
   const handleExport = () => {
-    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Status', 'Inquired About', 'Notes'];
+    const headers = [__('First Name', 'truepaws'), __('Last Name', 'truepaws'), __('Email', 'truepaws'), __('Phone', 'truepaws'), __('Status', 'truepaws'), __('Inquired About', 'truepaws'), __('Notes', 'truepaws')];
     const rows = contacts.map((c) => [
       c.first_name || '',
       c.last_name || '',
@@ -61,25 +62,25 @@ function ContactList() {
   };
 
   if (loading) {
-    return <LoadingSpinner message="Loading contacts..." />;
+    return <LoadingSpinner message={__('Loading contacts...', 'truepaws')} />;
   }
 
   return (
     <Layout
-      title="Contacts"
+      title={__('Contacts', 'truepaws')}
       actions={
         <>
           <Link to="/contacts/new" className="truepaws-button">
-            Add New Contact
+            {__('Add New Contact', 'truepaws')}
           </Link>
           <button
             type="button"
             className="truepaws-button secondary"
             onClick={handleExport}
             disabled={contacts.length === 0}
-            title="Export contacts for Mailchimp, Constant Contact, etc."
+            title={__('Export contacts for Mailchimp, Constant Contact, etc.', 'truepaws')}
           >
-            Export CSV
+            {__('Export CSV', 'truepaws')}
           </button>
         </>
       }
@@ -87,23 +88,23 @@ function ContactList() {
       <div className="truepaws-filters">
         <div className="truepaws-form-row">
           <div className="truepaws-form-group">
-            <label htmlFor="contact-status-filter">Filter by status</label>
+            <label htmlFor="contact-status-filter">{__('Filter by status', 'truepaws')}</label>
             <select
               id="contact-status-filter"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="truepaws-form-control"
             >
-              <option value="">All Contacts</option>
-              <option value="waitlist">Waitlist</option>
-              <option value="reserved">Reserved</option>
-              <option value="buyer">Buyer</option>
-              <option value="inactive">Inactive</option>
+              <option value="">{__('All Contacts', 'truepaws')}</option>
+              <option value="waitlist">{__('Waitlist', 'truepaws')}</option>
+              <option value="reserved">{__('Reserved', 'truepaws')}</option>
+              <option value="buyer">{__('Buyer', 'truepaws')}</option>
+              <option value="inactive">{__('Inactive', 'truepaws')}</option>
             </select>
           </div>
           <div className="truepaws-form-group">
             <span className="export-hint">
-              {contacts.length} contact{contacts.length !== 1 ? 's' : ''} — Export for email marketing
+              {sprintf(_n('%s contact', '%s contacts', contacts.length, 'truepaws'), contacts.length)} — {__('Export for email marketing', 'truepaws')}
             </span>
           </div>
         </div>
@@ -113,13 +114,13 @@ function ContactList() {
         <table className="truepaws-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Status</th>
-              <th>Inquired About</th>
-              <th>Created</th>
-              <th>Actions</th>
+              <th>{__('Name', 'truepaws')}</th>
+              <th>{__('Email', 'truepaws')}</th>
+              <th>{__('Phone', 'truepaws')}</th>
+              <th>{__('Status', 'truepaws')}</th>
+              <th>{__('Inquired About', 'truepaws')}</th>
+              <th>{__('Created', 'truepaws')}</th>
+              <th>{__('Actions', 'truepaws')}</th>
             </tr>
           </thead>
           <tbody>
@@ -151,7 +152,7 @@ function ContactList() {
                 </td>
                 <td>
                   <span className={`contact-status status-${contact.status}`}>
-                    {contact.status.charAt(0).toUpperCase() + contact.status.slice(1)}
+                    {contact.status === 'waitlist' ? __('Waitlist', 'truepaws') : contact.status === 'reserved' ? __('Reserved', 'truepaws') : contact.status === 'buyer' ? __('Buyer', 'truepaws') : contact.status === 'inactive' ? __('Inactive', 'truepaws') : contact.status.charAt(0).toUpperCase() + contact.status.slice(1)}
                   </span>
                 </td>
                 <td>
@@ -172,7 +173,7 @@ function ContactList() {
                 <td>
                   <div className="contact-actions">
                     <Link to={`/contacts/${contact.id}`} className="truepaws-button secondary">
-                      View
+                      {__('View', 'truepaws')}
                     </Link>
                   </div>
                 </td>
@@ -183,7 +184,7 @@ function ContactList() {
 
         {contacts.length === 0 && (
           <div className="truepaws-empty-state">
-            <p>No contacts found. <Link to="/contacts/new">Add your first contact</Link></p>
+            <p>{__('No contacts found.', 'truepaws')} <Link to="/contacts/new">{__('Add your first contact', 'truepaws')}</Link></p>
           </div>
         )}
       </div>

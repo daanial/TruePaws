@@ -1,15 +1,16 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { __ } from '@wordpress/i18n';
 
 function Sidebar() {
   const location = useLocation();
 
   const menuItems = [
-    { path: '/', label: 'Dashboard', icon: '📊' },
-    { path: '/animals', label: 'Animals', icon: '🐕' },
-    { path: '/litters', label: 'Litters', icon: '👨‍👩‍👧‍👦' },
-    { path: '/contacts', label: 'Contacts', icon: '👥' },
-    { path: '/settings', label: 'Settings', icon: '⚙️' },
+    { path: '/', label: __('Dashboard', 'truepaws'), icon: '📊' },
+    { path: '/animals', label: __('Animals', 'truepaws'), icon: '🐕' },
+    { path: '/litters', label: __('Litters', 'truepaws'), icon: '👨‍👩‍👧‍👦' },
+    { path: '/contacts', label: __('Contacts', 'truepaws'), icon: '👥' },
+    { path: '/settings', label: __('Settings', 'truepaws'), icon: '⚙️' },
   ];
 
   return (

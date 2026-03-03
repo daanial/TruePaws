@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { __ } from '@wordpress/i18n';
 import { animalsAPI } from '../../api/client';
 
 function MultiPhotoUploader({ animalId, photos = [], onPhotosChange }) {
@@ -7,13 +8,13 @@ function MultiPhotoUploader({ animalId, photos = [], onPhotosChange }) {
 
   const openMediaLibrary = () => {
     if (!window.wp || !window.wp.media) {
-      alert('WordPress media library not available');
+      alert(__('WordPress media library not available', 'truepaws'));
       return;
     }
 
     const mediaFrame = window.wp.media({
-      title: 'Select Photos',
-      button: { text: 'Add Photos' },
+      title: __('Select Photos', 'truepaws'),
+      button: { text: __('Add Photos', 'truepaws') },
       multiple: true,
       library: { type: 'image' },
     });
@@ -29,7 +30,7 @@ function MultiPhotoUploader({ animalId, photos = [], onPhotosChange }) {
         onPhotosChange(res.data.photos || []);
       } catch (err) {
         console.error('Error adding photos:', err);
-        alert('Error adding photos: ' + (err.response?.data?.message || err.message));
+        alert(__('Error adding photos:', 'truepaws') + ' ' + (err.response?.data?.message || err.message));
       } finally {
         setSaving(false);
       }
@@ -39,14 +40,14 @@ function MultiPhotoUploader({ animalId, photos = [], onPhotosChange }) {
   };
 
   const removePhoto = async (photoId) => {
-    if (!confirm('Remove this photo?')) return;
+    if (!confirm(__('Remove this photo?', 'truepaws'))) return;
     setSaving(true);
     try {
       const res = await animalsAPI.deletePhoto(animalId, photoId);
       onPhotosChange(res.data.photos || []);
     } catch (err) {
       console.error('Error removing photo:', err);
-      alert('Error removing photo: ' + (err.response?.data?.message || err.message));
+      alert(__('Error removing photo:', 'truepaws') + ' ' + (err.response?.data?.message || err.message));
     } finally {
       setSaving(false);
     }
@@ -64,7 +65,7 @@ function MultiPhotoUploader({ animalId, photos = [], onPhotosChange }) {
       onPhotosChange(res.data.photos || []);
     } catch (err) {
       console.error('Error setting featured:', err);
-      alert('Error setting featured: ' + (err.response?.data?.message || err.message));
+      alert(__('Error setting featured:', 'truepaws') + ' ' + (err.response?.data?.message || err.message));
     } finally {
       setSaving(false);
     }
@@ -108,7 +109,7 @@ function MultiPhotoUploader({ animalId, photos = [], onPhotosChange }) {
       onPhotosChange(res.data.photos || []);
     } catch (err) {
       console.error('Error reordering:', err);
-      alert('Error reordering: ' + (err.response?.data?.message || err.message));
+      alert(__('Error reordering:', 'truepaws') + ' ' + (err.response?.data?.message || err.message));
     } finally {
       setSaving(false);
     }
@@ -116,8 +117,8 @@ function MultiPhotoUploader({ animalId, photos = [], onPhotosChange }) {
 
   return (
     <div className="multi-photo-uploader">
-      <label>Photo Gallery</label>
-      <p className="multi-photo-hint">Add multiple photos. Drag to reorder. Click the star to set as featured.</p>
+      <label>{__('Photo Gallery', 'truepaws')}</label>
+      <p className="multi-photo-hint">{__('Add multiple photos. Drag to reorder. Click the star to set as featured.', 'truepaws')}</p>
       <div className="multi-photo-grid">
         {photos.map((photo, index) => (
           <div
@@ -132,16 +133,16 @@ function MultiPhotoUploader({ animalId, photos = [], onPhotosChange }) {
             <div className="multi-photo-thumb">
               <img src={photo.url || photo.url_large} alt="" onError={(e) => { e.target.style.display = 'none'; }} />
               {photo.is_featured ? (
-                <span className="multi-photo-featured-badge" title="Featured">★</span>
+                <span className="multi-photo-featured-badge" title={__('Featured', 'truepaws')}>★</span>
               ) : null}
             </div>
             <div className="multi-photo-actions">
               {!photo.is_featured ? (
-                <button type="button" className="multi-photo-btn star" onClick={() => setFeatured(photo.id)} title="Set as featured">
+                <button type="button" className="multi-photo-btn star" onClick={() => setFeatured(photo.id)} title={__('Set as featured', 'truepaws')}>
                   ☆
                 </button>
               ) : null}
-              <button type="button" className="multi-photo-btn remove" onClick={() => removePhoto(photo.id)} title="Remove">
+              <button type="button" className="multi-photo-btn remove" onClick={() => removePhoto(photo.id)} title={__('Remove', 'truepaws')}>
                 ×
               </button>
             </div>
@@ -149,10 +150,10 @@ function MultiPhotoUploader({ animalId, photos = [], onPhotosChange }) {
         ))}
         <div className="multi-photo-add" onClick={openMediaLibrary}>
           <span className="multi-photo-add-icon">+</span>
-          <span>Add Photos</span>
+          <span>{__('Add Photos', 'truepaws')}</span>
         </div>
       </div>
-      {saving && <span className="multi-photo-saving">Saving…</span>}
+      {saving && <span className="multi-photo-saving">{__('Saving…', 'truepaws')}</span>}
     </div>
   );
 }

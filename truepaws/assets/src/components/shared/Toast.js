@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { __ } from '@wordpress/i18n';
 
 const Toast = ({ message, type = 'info', duration = 3000, onClose }) => {
   const [isVisible, setIsVisible] = useState(true);
@@ -69,7 +70,7 @@ const Toast = ({ message, type = 'info', duration = 3000, onClose }) => {
             setTimeout(onClose, 300);
           }
         }}
-        aria-label="Close"
+        aria-label={__('Close', 'truepaws')}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <line x1="18" y1="6" x2="6" y2="18"></line>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { __ } from '@wordpress/i18n';
 import { littersAPI, animalsAPI } from '../../api/client';
 import Layout from '../shared/Layout';
 import { format, addDays } from 'date-fns';
@@ -65,22 +66,22 @@ function LitterForm() {
   };
 
   return (
-    <Layout title="Log New Mating">
+    <Layout title={__('Log New Mating', 'truepaws')}>
       <form onSubmit={handleSubmit} className="truepaws-form">
         <div className="truepaws-form-row">
           <div className="truepaws-form-group">
-            <label>Sire (Father) *</label>
+            <label>{__('Sire (Father)', 'truepaws')} *</label>
             <select name="sire_id" value={formData.sire_id} onChange={handleChange} required>
-              <option value="">Select sire...</option>
+              <option value="">{__('Select sire...', 'truepaws')}</option>
               {getParentOptions('M', formData.dam_id).map(animal => (
                 <option key={animal.id} value={animal.id}>{animal.name}</option>
               ))}
             </select>
           </div>
           <div className="truepaws-form-group">
-            <label>Dam (Mother) *</label>
+            <label>{__('Dam (Mother)', 'truepaws')} *</label>
             <select name="dam_id" value={formData.dam_id} onChange={handleChange} required>
-              <option value="">Select dam...</option>
+              <option value="">{__('Select dam...', 'truepaws')}</option>
               {getParentOptions('F', formData.sire_id).map(animal => (
                 <option key={animal.id} value={animal.id}>{animal.name}</option>
               ))}
@@ -90,7 +91,7 @@ function LitterForm() {
 
         <div className="truepaws-form-row">
           <div className="truepaws-form-group">
-            <label>Mating Date *</label>
+            <label>{__('Mating Date', 'truepaws')} *</label>
             <input
               type="date"
               name="mating_date"
@@ -100,16 +101,16 @@ function LitterForm() {
             />
           </div>
           <div className="truepaws-form-group">
-            <label>Method</label>
+            <label>{__('Method', 'truepaws')}</label>
             <select name="mating_method" value={formData.mating_method} onChange={handleChange}>
-              <option value="natural">Natural</option>
-              <option value="ai">Artificial Insemination</option>
+              <option value="natural">{__('Natural', 'truepaws')}</option>
+              <option value="ai">{__('Artificial Insemination', 'truepaws')}</option>
             </select>
           </div>
         </div>
 
         <div className="truepaws-form-group">
-          <label>Notes</label>
+          <label>{__('Notes', 'truepaws')}</label>
           <textarea
             name="notes"
             value={formData.notes}
@@ -120,12 +121,11 @@ function LitterForm() {
 
         {formData.mating_date && expectedWhelpingDate && (
           <div className="pregnancy-calculator">
-            <h4>Expected Whelping Date</h4>
+            <h4>{__('Expected Whelping Date', 'truepaws')}</h4>
             <div className="calculator-result">
               <p><strong>{format(new Date(expectedWhelpingDate), 'MMMM d, yyyy')}</strong></p>
               <p className="calculator-note">
-                Based on 63-day gestation period (typical for dogs).
-                Actual whelping may vary ±7 days.
+                {__('Based on 63-day gestation period (typical for dogs). Actual whelping may vary ±7 days.', 'truepaws')}
               </p>
             </div>
           </div>
@@ -133,10 +133,10 @@ function LitterForm() {
 
         <div className="truepaws-form-actions">
           <button type="submit" className="truepaws-button" disabled={loading}>
-            {loading ? 'Creating...' : 'Create Litter'}
+            {loading ? __('Creating...', 'truepaws') : __('Create Litter', 'truepaws')}
           </button>
           <button type="button" className="truepaws-button secondary" onClick={() => navigate('/litters')}>
-            Cancel
+            {__('Cancel', 'truepaws')}
           </button>
         </div>
       </form>

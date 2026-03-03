@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { __, sprintf } from '@wordpress/i18n';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -20,7 +21,7 @@ const CHART_COLORS = [
 
 function BreedDistributionChart({ breedsByCount }) {
   if (!breedsByCount || breedsByCount.length === 0) {
-    return <p className="breed-empty">No breed data yet. Add animals to see distribution.</p>;
+    return <p className="breed-empty">{__('No breed data yet. Add animals to see distribution.', 'truepaws')}</p>;
   }
 
   const data = {
@@ -90,9 +91,9 @@ function SalesChart() {
     })();
   }, []);
 
-  if (loading) return <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14 }}>Loading sales data...</p>;
+  if (loading) return <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14 }}>{__('Loading sales data...', 'truepaws')}</p>;
   if (!salesData || !salesData.salesByMonth || salesData.salesByMonth.length === 0) {
-    return <p className="breed-empty">No sales data yet.</p>;
+    return <p className="breed-empty">{__('No sales data yet.', 'truepaws')}</p>;
   }
 
   const months = [...salesData.salesByMonth].reverse().slice(-12);
@@ -104,7 +105,7 @@ function SalesChart() {
       return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
     }),
     datasets: [{
-      label: 'Revenue',
+      label: __('Revenue', 'truepaws'),
       data: months.map(m => m.revenue),
       backgroundColor: 'rgba(75, 192, 200, 0.6)',
       borderColor: '#4bc0c8',
@@ -151,7 +152,7 @@ function SalesChart() {
     <div>
       <div className="sales-chart-summary">
         <span className="sales-chart-total">${salesData.totalRevenue?.toLocaleString() || 0}</span>
-        <span className="sales-chart-label">Total Revenue ({salesData.totalSales || 0} sales)</span>
+        <span className="sales-chart-label">{sprintf(__('Total Revenue (%s sales)', 'truepaws'), salesData.totalSales || 0)}</span>
       </div>
       <div style={{ height: 220, position: 'relative' }}>
         <Bar data={data} options={options} />

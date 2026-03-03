@@ -41,7 +41,7 @@ class TruePaws_Shortcodes {
         ), $atts);
 
         if (!$atts['id']) {
-            return '<p>' . __('Invalid litter ID.', TRUEPAWS_TEXT_DOMAIN) . '</p>';
+            return '<p>' . __('Invalid litter ID.', 'truepaws') . '</p>';
         }
 
         return '<div class="truepaws-litter" data-litter-id="' . esc_attr($atts['id']) . '">';
@@ -62,7 +62,7 @@ class TruePaws_Shortcodes {
         ), $atts);
 
         if (!$atts['id']) {
-            return '<p>' . __('Invalid animal ID.', TRUEPAWS_TEXT_DOMAIN) . '</p>';
+            return '<p>' . __('Invalid animal ID.', 'truepaws') . '</p>';
         }
 
         return '<div class="truepaws-animal" data-animal-id="' . esc_attr($atts['id']) . '">';

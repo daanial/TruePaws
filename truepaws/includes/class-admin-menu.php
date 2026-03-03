@@ -395,6 +395,8 @@ npm run build</pre>
                 true
             );
 
+            wp_set_script_translations('truepaws-app', 'truepaws', TRUEPAWS_PLUGIN_DIR . 'languages');
+
             // Localize script with necessary data
             wp_localize_script('truepaws-app', 'truepawsData', array(
                 'apiUrl' => rest_url('truepaws/v1/'),

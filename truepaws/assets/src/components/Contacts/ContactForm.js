@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { __, sprintf } from '@wordpress/i18n';
 import { contactsAPI } from '../../api/client';
 import Layout from '../shared/Layout';
 
@@ -25,7 +26,7 @@ function ContactForm() {
       navigate('/contacts');
     } catch (error) {
       console.error('Error creating contact:', error);
-      alert('Error creating contact: ' + (error.response?.data?.message || error.message));
+      alert(sprintf(__('Error creating contact: %s', 'truepaws'), error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -40,11 +41,11 @@ function ContactForm() {
   };
 
   return (
-    <Layout title="Add New Contact">
+    <Layout title={__('Add New Contact', 'truepaws')}>
       <form onSubmit={handleSubmit} className="truepaws-form">
         <div className="truepaws-form-row">
           <div className="truepaws-form-group">
-            <label>First Name *</label>
+            <label>{__('First Name', 'truepaws')} *</label>
             <input
               type="text"
               name="first_name"
@@ -54,7 +55,7 @@ function ContactForm() {
             />
           </div>
           <div className="truepaws-form-group">
-            <label>Last Name</label>
+            <label>{__('Last Name', 'truepaws')}</label>
             <input
               type="text"
               name="last_name"
@@ -66,7 +67,7 @@ function ContactForm() {
 
         <div className="truepaws-form-row">
           <div className="truepaws-form-group">
-            <label>Email *</label>
+            <label>{__('Email', 'truepaws')} *</label>
             <input
               type="email"
               name="email"
@@ -76,7 +77,7 @@ function ContactForm() {
             />
           </div>
           <div className="truepaws-form-group">
-            <label>Phone</label>
+            <label>{__('Phone', 'truepaws')}</label>
             <input
               type="tel"
               name="phone"
@@ -87,7 +88,7 @@ function ContactForm() {
         </div>
 
         <div className="truepaws-form-group">
-          <label>Address</label>
+          <label>{__('Address', 'truepaws')}</label>
           <textarea
             name="address"
             value={formData.address}
@@ -98,18 +99,18 @@ function ContactForm() {
 
         <div className="truepaws-form-row">
           <div className="truepaws-form-group">
-            <label>Status</label>
+            <label>{__('Status', 'truepaws')}</label>
             <select name="status" value={formData.status} onChange={handleChange}>
-              <option value="waitlist">Waitlist</option>
-              <option value="reserved">Reserved</option>
-              <option value="buyer">Buyer</option>
-              <option value="inactive">Inactive</option>
+              <option value="waitlist">{__('Waitlist', 'truepaws')}</option>
+              <option value="reserved">{__('Reserved', 'truepaws')}</option>
+              <option value="buyer">{__('Buyer', 'truepaws')}</option>
+              <option value="inactive">{__('Inactive', 'truepaws')}</option>
             </select>
           </div>
         </div>
 
         <div className="truepaws-form-group">
-          <label>Notes</label>
+          <label>{__('Notes', 'truepaws')}</label>
           <textarea
             name="notes"
             value={formData.notes}
@@ -120,10 +121,10 @@ function ContactForm() {
 
         <div className="truepaws-form-actions">
           <button type="submit" className="truepaws-button" disabled={loading}>
-            {loading ? 'Creating...' : 'Create Contact'}
+            {loading ? __('Creating...', 'truepaws') : __('Create Contact', 'truepaws')}
           </button>
           <button type="button" className="truepaws-button secondary" onClick={() => navigate('/contacts')}>
-            Cancel
+            {__('Cancel', 'truepaws')}
           </button>
         </div>
       </form>

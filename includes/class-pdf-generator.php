@@ -50,7 +50,7 @@ class TruePaws_PDF_Generator {
      */
     public function tcpdf_missing_notice() {
         echo '<div class="notice notice-warning"><p>';
-        echo __('TruePaws PDF generation requires TCPDF library. Please install TCPDF to enable PDF features.', TRUEPAWS_TEXT_DOMAIN);
+        echo __('TruePaws PDF generation requires TCPDF library. Please install TCPDF to enable PDF features.', 'truepaws');
         echo '</p></div>';
     }
 }

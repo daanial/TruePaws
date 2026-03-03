@@ -1,5 +1,6 @@
 import React from 'react';
 import { format } from 'date-fns';
+import { __ } from '@wordpress/i18n';
 
 function Timeline({ events }) {
   const getEventIcon = (eventType) => {
@@ -18,14 +19,14 @@ function Timeline({ events }) {
 
   const getEventTypeLabel = (eventType) => {
     const labels = {
-      birth: 'Birth',
-      vaccine: 'Vaccine',
-      heat: 'Heat Cycle',
-      mating: 'Mating',
-      whelping: 'Whelping',
-      weight: 'Weight',
-      vet_visit: 'Vet Visit',
-      note: 'Note'
+      birth: __('Birth', 'truepaws'),
+      vaccine: __('Vaccine', 'truepaws'),
+      heat: __('Heat Cycle', 'truepaws'),
+      mating: __('Mating', 'truepaws'),
+      whelping: __('Whelping', 'truepaws'),
+      weight: __('Weight', 'truepaws'),
+      vet_visit: __('Vet Visit', 'truepaws'),
+      note: __('Note', 'truepaws')
     };
     return labels[eventType] || eventType;
   };
@@ -48,12 +49,12 @@ function Timeline({ events }) {
     if (Object.keys(meta).length === 0) return null;
 
     const labels = {
-      price: 'Price',
-      notes: 'Notes',
-      contact_id: 'Contact',
-      sale_type: 'Sale Type',
-      puppy_count: 'Puppies',
-      litter_id: 'Litter'
+      price: __('Price', 'truepaws'),
+      notes: __('Notes', 'truepaws'),
+      contact_id: __('Contact', 'truepaws'),
+      sale_type: __('Sale Type', 'truepaws'),
+      puppy_count: __('Puppies', 'truepaws'),
+      litter_id: __('Litter', 'truepaws')
     };
 
     return Object.entries(meta)
@@ -65,7 +66,7 @@ function Timeline({ events }) {
   };
 
   if (!events || events.length === 0) {
-    return <p className="timeline-empty">No events recorded yet.</p>;
+    return <p className="timeline-empty">{__('No events recorded yet.', 'truepaws')}</p>;
   }
 
   return (

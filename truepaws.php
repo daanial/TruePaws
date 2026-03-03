@@ -9,6 +9,7 @@
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: truepaws
+ * Domain Path: /languages
  * Requires at least: 5.0
  * Tested up to: 6.4
  * Requires PHP: 7.4
@@ -24,7 +25,6 @@ define('TRUEPAWS_VERSION', '1.0.0');
 define('TRUEPAWS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('TRUEPAWS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('TRUEPAWS_PLUGIN_BASENAME', plugin_basename(__FILE__));
-define('TRUEPAWS_TEXT_DOMAIN', 'truepaws');
 
 // Autoloader for classes
 spl_autoload_register(function ($class_name) {
@@ -97,7 +97,7 @@ class TruePaws {
      */
     public function load_textdomain() {
         load_plugin_textdomain(
-            TRUEPAWS_TEXT_DOMAIN,
+            'truepaws',
             false,
             dirname(TRUEPAWS_PLUGIN_BASENAME) . '/languages/'
         );

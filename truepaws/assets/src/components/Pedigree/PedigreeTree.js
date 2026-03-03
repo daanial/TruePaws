@@ -1,15 +1,16 @@
 import React from 'react';
+import { __ } from '@wordpress/i18n';
 
 function PedigreeTree({ pedigree, generations = 3 }) {
   if (!pedigree) {
-    return <div className="pedigree-tree-empty">No pedigree data available</div>;
+    return <div className="pedigree-tree-empty">{__('No pedigree data available', 'truepaws')}</div>;
   }
 
   const renderAnimal = (animal, isMain = false) => {
     if (!animal) {
       return (
         <div className="pedigree-animal empty">
-          <p>Unknown</p>
+          <p>{__('Unknown', 'truepaws')}</p>
         </div>
       );
     }
@@ -73,13 +74,12 @@ function PedigreeTree({ pedigree, generations = 3 }) {
       {/* Export Options */}
       <div className="pedigree-actions">
         <button className="truepaws-button secondary" onClick={() => window.print()}>
-          Print Pedigree
+          {__('Print Pedigree', 'truepaws')}
         </button>
         <button className="truepaws-button" onClick={() => {
-          // PDF generation will be implemented in Phase 8
-          alert('PDF generation will be available in Phase 8');
+          alert(__('PDF generation will be available in Phase 8', 'truepaws'));
         }}>
-          Download PDF
+          {__('Download PDF', 'truepaws')}
         </button>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { __, sprintf, _n } from '@wordpress/i18n';
 import { dashboardAPI } from '../../api/client';
 
 function ActivityHeatmap() {
@@ -71,8 +72,8 @@ function ActivityHeatmap() {
   return (
     <div className="activity-heatmap">
       <div className="heatmap-header">
-        <h3 className="card-title">Kennel Activity</h3>
-        <span className="heatmap-total">{totalEvents} events this year</span>
+        <h3 className="card-title">{__('Kennel Activity', 'truepaws')}</h3>
+        <span className="heatmap-total">{sprintf(_n('%s event this year', '%s events this year', totalEvents, 'truepaws'), totalEvents)}</span>
       </div>
       <div className="heatmap-scroll">
         <div className="heatmap-months">
@@ -97,7 +98,7 @@ function ActivityHeatmap() {
                     onMouseEnter={(e) => {
                       const rect = e.target.getBoundingClientRect();
                       setTooltip({
-                        text: `${day.count} event${day.count !== 1 ? 's' : ''} on ${day.date}`,
+                        text: sprintf(_n('%s event on %s', '%s events on %s', day.count, 'truepaws'), day.count, day.date),
                         x: rect.left + rect.width / 2,
                         y: rect.top - 8,
                       });
@@ -110,13 +111,13 @@ function ActivityHeatmap() {
           </div>
         </div>
         <div className="heatmap-legend">
-          <span className="heatmap-legend-label">Less</span>
+          <span className="heatmap-legend-label">{__('Less', 'truepaws')}</span>
           <div className="heatmap-cell" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
           <div className="heatmap-cell" style={{ backgroundColor: 'rgba(75, 192, 200, 0.25)' }} />
           <div className="heatmap-cell" style={{ backgroundColor: 'rgba(75, 192, 200, 0.45)' }} />
           <div className="heatmap-cell" style={{ backgroundColor: 'rgba(75, 192, 200, 0.7)' }} />
           <div className="heatmap-cell" style={{ backgroundColor: 'rgba(75, 192, 200, 0.95)' }} />
-          <span className="heatmap-legend-label">More</span>
+          <span className="heatmap-legend-label">{__('More', 'truepaws')}</span>
         </div>
       </div>
       {tooltip && (

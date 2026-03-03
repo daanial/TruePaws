@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { __ } from '@wordpress/i18n';
 import { animalsAPI, eventsAPI, contactsAPI } from '../../api/client';
 import Layout from '../shared/Layout';
 import LoadingSpinner from '../shared/LoadingSpinner';
@@ -82,7 +83,7 @@ function AnimalProfile() {
       const data = response.data;
       setAiCareAdvice(data);
     } catch (error) {
-      setAiError(error.response?.data?.message || 'Failed to load AI advice');
+      setAiError(error.response?.data?.message || __('Failed to load AI advice', 'truepaws'));
       setAiCareAdvice({ enabled: false });
     } finally {
       setAiLoading(false);
@@ -116,14 +117,14 @@ function AnimalProfile() {
       const response = await animalsAPI.getMarketingBio(id);
       const data = response.data;
       if (data.enabled === false) {
-        setBioError(data.message || 'Configure Gemini API key in Settings.');
+        setBioError(data.message || __('Configure Gemini API key in Settings.', 'truepaws'));
       } else if (data.error) {
         setBioError(data.error);
       } else {
         setMarketingBio(stripAIPreamble(data.content));
       }
     } catch (error) {
-      setBioError(error.response?.data?.message || 'Failed to generate bio');
+        setBioError(error.response?.data?.message || __('Failed to generate bio', 'truepaws'));
     } finally {
       setBioLoading(false);
     }
@@ -173,7 +174,7 @@ function AnimalProfile() {
       await eventsAPI.create(id, {
         event_type: 'note',
         event_date: salesFormData.sale_date,
-        title: 'Sold',
+        title: __('Sold', 'truepaws'),
         meta_data: {
           contact_id: salesFormData.contact_id,
           price: salesFormData.price,
@@ -308,11 +309,11 @@ function AnimalProfile() {
   };
 
   if (loading) {
-    return <LoadingSpinner message="Loading animal..." />;
+    return <LoadingSpinner message={__('Loading animal...', 'truepaws')} />;
   }
 
   if (!animal) {
-    return <div>Animal not found</div>;
+    return <div>{__('Animal not found', 'truepaws')}</div>;
   }
 
   return (
@@ -325,7 +326,7 @@ function AnimalProfile() {
               <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path>
               <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
             </svg>
-            Edit
+            {__('Edit', 'truepaws')}
           </Link>
           {animal && animal.status !== 'sold' && (
             <button
@@ -337,7 +338,7 @@ function AnimalProfile() {
                 <circle cx="20" cy="21" r="1"></circle>
                 <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"></path>
               </svg>
-              Sell/Reserve
+              {__('Sell/Reserve', 'truepaws')}
             </button>
           )}
           {animal && animal.status === 'sold' && (
@@ -385,7 +386,7 @@ function AnimalProfile() {
                 <line x1="16" y1="17" x2="8" y2="17"></line>
                 <polyline points="10 9 9 9 8 9"></polyline>
               </svg>
-              Generate Handover PDF
+              {__('Generate Handover PDF', 'truepaws')}
             </button>
           )}
           <button
@@ -396,7 +397,7 @@ function AnimalProfile() {
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            Add Event
+            {__('Add Event', 'truepaws')}
           </button>
         </div>
       }
@@ -434,8 +435,8 @@ function AnimalProfile() {
                     </svg>
                   </span>
                   <div>
-                    <span className="info-label">Breed</span>
-                    <span className="info-value">{animal.breed || 'Not specified'}</span>
+                    <span className="info-label">{__('Breed', 'truepaws')}</span>
+                    <span className="info-value">{animal.breed || __('Not specified', 'truepaws')}</span>
                   </div>
                 </div>
 
@@ -450,8 +451,8 @@ function AnimalProfile() {
                     </svg>
                   </span>
                   <div>
-                    <span className="info-label">Sex</span>
-                    <span className="info-value">{animal.sex === 'M' ? 'Male' : 'Female'}</span>
+                    <span className="info-label">{__('Sex', 'truepaws')}</span>
+                    <span className="info-value">{animal.sex === 'M' ? __('Male', 'truepaws') : __('Female', 'truepaws')}</span>
                   </div>
                 </div>
 
@@ -466,7 +467,7 @@ function AnimalProfile() {
                       </svg>
                     </span>
                     <div>
-                      <span className="info-label">Born</span>
+                      <span className="info-label">{__('Born', 'truepaws')}</span>
                       <span className="info-value">{animal.birth_date}</span>
                     </div>
                   </div>
@@ -481,7 +482,7 @@ function AnimalProfile() {
                       </svg>
                     </span>
                     <div>
-                      <span className="info-label">Registration</span>
+                      <span className="info-label">{__('Registration', 'truepaws')}</span>
                       <span className="info-value">{animal.registration_number}</span>
                     </div>
                   </div>
@@ -497,7 +498,7 @@ function AnimalProfile() {
                       </svg>
                     </span>
                     <div>
-                      <span className="info-label">Microchip</span>
+                      <span className="info-label">{__('Microchip', 'truepaws')}</span>
                       <span className="info-value">{animal.microchip_id}</span>
                     </div>
                   </div>
@@ -509,7 +510,7 @@ function AnimalProfile() {
 
         {/* Photo Gallery */}
         <div className="animal-photos-card">
-          <h3 className="section-title">Photo Gallery</h3>
+          <h3 className="section-title">{__('Photo Gallery', 'truepaws')}</h3>
           <MultiPhotoUploader
             animalId={id}
             photos={animal.photos || []}
@@ -530,9 +531,9 @@ function AnimalProfile() {
               <polyline points="16 18 22 12 16 6"></polyline>
               <polyline points="8 6 2 12 8 18"></polyline>
             </svg>
-            <h3 className="section-title">WordPress Shortcode</h3>
+            <h3 className="section-title">{__('WordPress Shortcode', 'truepaws')}</h3>
           </div>
-          <p className="shortcode-description">Add this shortcode to any WordPress page or post to display this animal on your front-end.</p>
+          <p className="shortcode-description">{__('Add this shortcode to any WordPress page or post to display this animal on your front-end.', 'truepaws')}</p>
           <div className="shortcode-box">
             <code className="shortcode-text">{shortcode}</code>
             <button
@@ -545,7 +546,7 @@ function AnimalProfile() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
-                  Copied!
+                  {__('Copied!', 'truepaws')}
                 </>
               ) : (
                 <>
@@ -553,7 +554,7 @@ function AnimalProfile() {
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                     <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
                   </svg>
-                  Copy
+                  {__('Copy', 'truepaws')}
                 </>
               )}
             </button>
@@ -571,16 +572,16 @@ function AnimalProfile() {
                   <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
                   <path d="M16 3.13a4 4 0 010 7.75"></path>
                 </svg>
-                Parents
+                {__('Parents', 'truepaws')}
               </h3>
               <div className="parents-info">
                 <div className="parent-item">
-                  <span className="parent-label">Sire</span>
-                  <span className="parent-value">{animal.sire_name || 'Unknown'}</span>
+                  <span className="parent-label">{__('Sire', 'truepaws')}</span>
+                  <span className="parent-value">{animal.sire_name || __('Unknown', 'truepaws')}</span>
                 </div>
                 <div className="parent-item">
-                  <span className="parent-label">Dam</span>
-                  <span className="parent-value">{animal.dam_name || 'Unknown'}</span>
+                  <span className="parent-label">{__('Dam', 'truepaws')}</span>
+                  <span className="parent-value">{animal.dam_name || __('Unknown', 'truepaws')}</span>
                 </div>
               </div>
             </div>
@@ -593,7 +594,7 @@ function AnimalProfile() {
                   <circle cx="12" cy="12" r="10"></circle>
                   <path d="M12 6v6l4 2"></path>
                 </svg>
-                Color/Markings
+                {__('Color/Markings', 'truepaws')}
               </h3>
               <p className="card-content">{animal.color_markings}</p>
             </div>
@@ -609,7 +610,7 @@ function AnimalProfile() {
                   <line x1="16" y1="17" x2="8" y2="17"></line>
                   <polyline points="10 9 9 9 8 9"></polyline>
                 </svg>
-                Description
+                {__('Description', 'truepaws')}
               </h3>
               <p className="card-content" style={{ whiteSpace: 'pre-wrap' }}>{animal.description}</p>
             </div>
@@ -620,25 +621,25 @@ function AnimalProfile() {
           <div className="event-form-modal">
             <div className="event-form-overlay" onClick={() => setShowEventForm(false)}></div>
             <div className="event-form-content">
-              <h4>Add Event</h4>
+              <h4>{__('Add Event', 'truepaws')}</h4>
               <form onSubmit={handleAddEvent}>
                 <div className="truepaws-form-group">
-                  <label>Event Type</label>
+                  <label>{__('Event Type', 'truepaws')}</label>
                   <select
                     value={eventFormData.event_type}
                     onChange={(e) => setEventFormData({...eventFormData, event_type: e.target.value})}
                   >
-                    <option value="note">Note</option>
-                    <option value="vaccine">Vaccine</option>
-                    <option value="vet_visit">Vet Visit</option>
-                    <option value="heat">Heat Cycle</option>
-                    <option value="weight">Weight</option>
+                    <option value="note">{__('Note', 'truepaws')}</option>
+                    <option value="vaccine">{__('Vaccine', 'truepaws')}</option>
+                    <option value="vet_visit">{__('Vet Visit', 'truepaws')}</option>
+                    <option value="heat">{__('Heat Cycle', 'truepaws')}</option>
+                    <option value="weight">{__('Weight', 'truepaws')}</option>
                   </select>
                 </div>
 
                 <div className="truepaws-form-row">
                   <div className="truepaws-form-group">
-                    <label>Date</label>
+                    <label>{__('Date', 'truepaws')}</label>
                     <input
                       type="date"
                       value={eventFormData.event_date}
@@ -647,21 +648,21 @@ function AnimalProfile() {
                     />
                   </div>
                   <div className="truepaws-form-group">
-                    <label>Title</label>
+                    <label>{__('Title', 'truepaws')}</label>
                     <input
                       type="text"
                       value={eventFormData.title}
                       onChange={(e) => setEventFormData({...eventFormData, title: e.target.value})}
-                      placeholder="Event title"
+                      placeholder={__('Event title', 'truepaws')}
                       required
                     />
                   </div>
                 </div>
 
                 <div className="truepaws-form-actions">
-                  <button type="submit" className="truepaws-button light-bg">Add Event</button>
+                  <button type="submit" className="truepaws-button light-bg">{__('Add Event', 'truepaws')}</button>
                   <button type="button" className="truepaws-button secondary light-bg" onClick={() => setShowEventForm(false)}>
-                    Cancel
+                    {__('Cancel', 'truepaws')}
                   </button>
                 </div>
               </form>
@@ -673,16 +674,16 @@ function AnimalProfile() {
           <div className="sales-modal">
             <div className="sales-modal-overlay" onClick={() => setShowSalesModal(false)}></div>
             <div className="sales-modal-content">
-              <h4>Sell or Reserve {animal.name}</h4>
+              <h4>{__('Sell or Reserve', 'truepaws')} {animal.name}</h4>
               <form onSubmit={handleSalesSubmit}>
                 <div className="truepaws-form-group">
-                  <label>Select Contact *</label>
+                  <label>{__('Select Contact', 'truepaws')} *</label>
                   <select
                     value={salesFormData.contact_id}
                     onChange={(e) => setSalesFormData({...salesFormData, contact_id: e.target.value})}
                     required
                   >
-                    <option value="">Choose a contact...</option>
+                    <option value="">{__('Choose a contact...', 'truepaws')}</option>
                     {contacts.map(contact => (
                       <option key={contact.id} value={contact.id}>
                         {contact.first_name} {contact.last_name} ({contact.email})
@@ -693,7 +694,7 @@ function AnimalProfile() {
 
                 <div className="truepaws-form-row">
                   <div className="truepaws-form-group">
-                    <label>Sale Date *</label>
+                    <label>{__('Sale Date', 'truepaws')} *</label>
                     <input
                       type="date"
                       value={salesFormData.sale_date}
@@ -702,7 +703,7 @@ function AnimalProfile() {
                     />
                   </div>
                   <div className="truepaws-form-group">
-                    <label>Price</label>
+                    <label>{__('Price', 'truepaws')}</label>
                     <input
                       type="number"
                       step="0.01"
@@ -714,29 +715,28 @@ function AnimalProfile() {
                 </div>
 
                 <div className="truepaws-form-group">
-                  <label>Notes</label>
+                  <label>{__('Notes', 'truepaws')}</label>
                   <textarea
                     value={salesFormData.notes}
                     onChange={(e) => setSalesFormData({...salesFormData, notes: e.target.value})}
                     rows="3"
-                    placeholder="Additional notes about the sale..."
+                    placeholder={__('Additional notes about the sale...', 'truepaws')}
                   />
                 </div>
 
                 <div className="truepaws-form-actions">
                   <button type="submit" className="truepaws-button light-bg">
-                    Mark as Sold
+                    {__('Mark as Sold', 'truepaws')}
                   </button>
                   <button type="button" className="truepaws-button secondary light-bg" onClick={() => setShowSalesModal(false)}>
-                    Cancel
+                    {__('Cancel', 'truepaws')}
                   </button>
                 </div>
               </form>
 
               <div className="sales-modal-footer">
                 <p className="sales-note">
-                  <strong>Note:</strong> This will change the animal's status to "Sold" and add a sale event to the timeline.
-                  You can generate a handover PDF once the sale is complete.
+                  <strong>{__('Note:', 'truepaws')}</strong> {__('This will change the animal\'s status to "Sold" and add a sale event to the timeline. You can generate a handover PDF once the sale is complete.', 'truepaws')}
                 </p>
               </div>
             </div>
@@ -754,7 +754,7 @@ function AnimalProfile() {
                 <path d="M12 20h9"></path>
                 <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"></path>
               </svg>
-              <h3 className="section-title">AI Marketing Bio</h3>
+              <h3 className="section-title">{__('AI Marketing Bio', 'truepaws')}</h3>
             </div>
             <button
               className="truepaws-button secondary"
@@ -762,11 +762,11 @@ function AnimalProfile() {
               disabled={bioLoading}
             >
               {bioLoading ? (
-                <><span className="truepaws-spinner"></span> Generating...</>
+                <><span className="truepaws-spinner"></span> {__('Generating...', 'truepaws')}</>
               ) : marketingBio ? (
-                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg> Regenerate</>
+                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg> {__('Regenerate', 'truepaws')}</>
               ) : (
-                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Generate Bio</>
+                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> {__('Generate Bio', 'truepaws')}</>
               )}
             </button>
           </div>
@@ -788,7 +788,7 @@ function AnimalProfile() {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    Copied!
+                    {__('Copied!', 'truepaws')}
                   </>
                 ) : (
                   <>
@@ -796,14 +796,14 @@ function AnimalProfile() {
                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                       <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
                     </svg>
-                    Copy to Clipboard
+                    {__('Copy to Clipboard', 'truepaws')}
                   </>
                 )}
               </button>
             </div>
           )}
           {!marketingBio && !bioError && !bioLoading && (
-            <p className="marketing-bio-hint">Generate an AI-written marketing description for this animal, ready to use on your website or listings.</p>
+            <p className="marketing-bio-hint">{__('Generate an AI-written marketing description for this animal, ready to use on your website or listings.', 'truepaws')}</p>
           )}
         </div>
 
@@ -814,7 +814,7 @@ function AnimalProfile() {
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            <h3 className="section-title">Timeline & Events</h3>
+            <h3 className="section-title">{__('Timeline & Events', 'truepaws')}</h3>
           </div>
           <Timeline events={timeline} />
         </div>
@@ -832,7 +832,7 @@ function AnimalProfile() {
                   <path d="M12 3v4"></path>
                   <circle cx="12" cy="19" r="1"></circle>
                 </svg>
-                Pedigree
+                {__('Pedigree', 'truepaws')}
               </h3>
               <button
                 type="button"
@@ -877,23 +877,23 @@ function AnimalProfile() {
                   <polyline points="7 10 12 15 17 10"></polyline>
                   <line x1="12" y1="15" x2="12" y2="3"></line>
                 </svg>
-                Download Pedigree Certificate
+                {__('Download Pedigree Certificate', 'truepaws')}
               </button>
             </div>
             <div className="pedigree-info">
               <div className="pedigree-item primary">
-                <span className="pedigree-label">Animal</span>
+                <span className="pedigree-label">{__('Animal', 'truepaws')}</span>
                 <span className="pedigree-value">{pedigree.animal.name}</span>
               </div>
               {pedigree.sire && (
                 <div className="pedigree-item">
-                  <span className="pedigree-label">Sire</span>
+                  <span className="pedigree-label">{__('Sire', 'truepaws')}</span>
                   <span className="pedigree-value">{pedigree.sire.name}</span>
                 </div>
               )}
               {pedigree.dam && (
                 <div className="pedigree-item">
-                  <span className="pedigree-label">Dam</span>
+                  <span className="pedigree-label">{__('Dam', 'truepaws')}</span>
                   <span className="pedigree-value">{pedigree.dam.name}</span>
                 </div>
               )}
@@ -908,7 +908,7 @@ function AnimalProfile() {
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
               </svg>
-              <h3 className="section-title">AI Care Recommendations</h3>
+              <h3 className="section-title">{__('AI Care Recommendations', 'truepaws')}</h3>
             </div>
             {aiCareAdvice?.cached && (
               <span className="ai-cached-badge">
@@ -916,13 +916,13 @@ function AnimalProfile() {
                   <circle cx="12" cy="12" r="10"></circle>
                   <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
-                Cached for 30 days
+                {__('Cached for 30 days', 'truepaws')}
               </span>
             )}
           </div>
           {aiLoading && (
             <div className="ai-loading-state">
-              <LoadingSpinner message="Loading AI advice..." />
+              <LoadingSpinner message={__('Loading AI advice...', 'truepaws')} />
             </div>
           )}
           {aiError && (
@@ -945,7 +945,7 @@ function AnimalProfile() {
                 <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"></path>
                 <line x1="12" y1="17" x2="12.01" y2="17"></line>
               </svg>
-              <p>Configure Gemini API key in Settings to enable AI recommendations.</p>
+              <p>{__('Configure Gemini API key in Settings to enable AI recommendations.', 'truepaws')}</p>
             </div>
           )}
           {!aiLoading && !aiError && aiCareAdvice?.enabled === true && aiCareAdvice?.error && (

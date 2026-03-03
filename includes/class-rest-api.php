@@ -292,7 +292,7 @@ class TruePaws_REST_API {
         ), ARRAY_A);
 
         if (!$animal) {
-            return new WP_Error('animal_not_found', __('Animal not found.', TRUEPAWS_TEXT_DOMAIN), array('status' => 404));
+            return new WP_Error('animal_not_found', __('Animal not found.', 'truepaws'), array('status' => 404));
         }
 
         // Format data
@@ -349,12 +349,12 @@ class TruePaws_REST_API {
 
         // Validate required fields
         if (empty($data['name']) || empty($data['sex'])) {
-            return new WP_Error('missing_required_fields', __('Name and sex are required.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('missing_required_fields', __('Name and sex are required.', 'truepaws'), array('status' => 400));
         }
 
         // Validate sex
         if (!in_array($data['sex'], array('M', 'F'))) {
-            return new WP_Error('invalid_sex', __('Sex must be M or F.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('invalid_sex', __('Sex must be M or F.', 'truepaws'), array('status' => 400));
         }
 
         // Check for duplicate microchip
@@ -364,14 +364,14 @@ class TruePaws_REST_API {
                 $data['microchip_id']
             ));
             if ($existing) {
-                return new WP_Error('duplicate_microchip', __('Microchip ID already exists.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+                return new WP_Error('duplicate_microchip', __('Microchip ID already exists.', 'truepaws'), array('status' => 400));
             }
         }
 
         $result = $wpdb->insert($table, $data);
 
         if ($result === false) {
-            return new WP_Error('db_error', __('Failed to create animal.', TRUEPAWS_TEXT_DOMAIN), array('status' => 500));
+            return new WP_Error('db_error', __('Failed to create animal.', 'truepaws'), array('status' => 500));
         }
 
         $animal_id = $wpdb->insert_id;
@@ -397,7 +397,7 @@ class TruePaws_REST_API {
         // Check if animal exists
         $existing = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE id = %d", $id));
         if (!$existing) {
-            return new WP_Error('animal_not_found', __('Animal not found.', TRUEPAWS_TEXT_DOMAIN), array('status' => 404));
+            return new WP_Error('animal_not_found', __('Animal not found.', 'truepaws'), array('status' => 404));
         }
 
         $data = array();
@@ -419,7 +419,7 @@ class TruePaws_REST_API {
                             $data[$field], $id
                         ));
                         if ($duplicate) {
-                            return new WP_Error('duplicate_microchip', __('Microchip ID already exists.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+                            return new WP_Error('duplicate_microchip', __('Microchip ID already exists.', 'truepaws'), array('status' => 400));
                         }
                     }
                 } else {
@@ -430,11 +430,11 @@ class TruePaws_REST_API {
 
         // Validate sex if provided
         if (isset($data['sex']) && !in_array($data['sex'], array('M', 'F'))) {
-            return new WP_Error('invalid_sex', __('Sex must be M or F.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('invalid_sex', __('Sex must be M or F.', 'truepaws'), array('status' => 400));
         }
 
         if (empty($data)) {
-            return new WP_Error('no_data', __('No data provided for update.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('no_data', __('No data provided for update.', 'truepaws'), array('status' => 400));
         }
 
         $data['updated_at'] = current_time('mysql');
@@ -442,7 +442,7 @@ class TruePaws_REST_API {
         $result = $wpdb->update($table, $data, array('id' => $id));
 
         if ($result === false) {
-            return new WP_Error('db_error', __('Failed to update animal.', TRUEPAWS_TEXT_DOMAIN), array('status' => 500));
+            return new WP_Error('db_error', __('Failed to update animal.', 'truepaws'), array('status' => 500));
         }
 
         return new WP_REST_Response(array('id' => $id, 'updated' => true), 200);
@@ -460,7 +460,7 @@ class TruePaws_REST_API {
         // Check if animal exists
         $existing = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE id = %d", $id));
         if (!$existing) {
-            return new WP_Error('animal_not_found', __('Animal not found.', TRUEPAWS_TEXT_DOMAIN), array('status' => 404));
+            return new WP_Error('animal_not_found', __('Animal not found.', 'truepaws'), array('status' => 404));
         }
 
         // Check if animal is referenced as parent
@@ -470,13 +470,13 @@ class TruePaws_REST_API {
         ));
 
         if ($is_parent > 0) {
-            return new WP_Error('animal_has_offspring', __('Cannot delete animal that has offspring.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('animal_has_offspring', __('Cannot delete animal that has offspring.', 'truepaws'), array('status' => 400));
         }
 
         $result = $wpdb->delete($table, array('id' => $id));
 
         if ($result === false) {
-            return new WP_Error('db_error', __('Failed to delete animal.', TRUEPAWS_TEXT_DOMAIN), array('status' => 500));
+            return new WP_Error('db_error', __('Failed to delete animal.', 'truepaws'), array('status' => 500));
         }
 
         return new WP_REST_Response(array('deleted' => true), 200);
@@ -488,23 +488,23 @@ class TruePaws_REST_API {
     private function get_animals_args() {
         return array(
             'page' => array(
-                'description' => __('Current page of the collection.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Current page of the collection.', 'truepaws'),
                 'type' => 'integer',
                 'default' => 1,
                 'sanitize_callback' => 'absint',
             ),
             'per_page' => array(
-                'description' => __('Maximum number of items to be returned in result set.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Maximum number of items to be returned in result set.', 'truepaws'),
                 'type' => 'integer',
                 'default' => 20,
                 'sanitize_callback' => 'absint',
             ),
             'search' => array(
-                'description' => __('Limit results to those matching a string.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Limit results to those matching a string.', 'truepaws'),
                 'type' => 'string',
             ),
             'status' => array(
-                'description' => __('Limit results to animals with specific status.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Limit results to animals with specific status.', 'truepaws'),
                 'type' => 'string',
                 'enum' => array('active', 'retired', 'sold', 'deceased', 'co-owned'),
             ),
@@ -518,13 +518,13 @@ class TruePaws_REST_API {
         return array(
             'name' => array(
                 'required' => true,
-                'description' => __('Animal name.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Animal name.', 'truepaws'),
                 'type' => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
             ),
             'sex' => array(
                 'required' => true,
-                'description' => __('Animal sex.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Animal sex.', 'truepaws'),
                 'type' => 'string',
                 'enum' => array('M', 'F'),
             ),
@@ -567,7 +567,7 @@ class TruePaws_REST_API {
         $pedigree = truepaws_get_pedigree($animal_id, $generations);
 
         if (!$pedigree) {
-            return new WP_Error('pedigree_not_found', __('Pedigree not found.', TRUEPAWS_TEXT_DOMAIN), array('status' => 404));
+            return new WP_Error('pedigree_not_found', __('Pedigree not found.', 'truepaws'), array('status' => 404));
         }
 
         return new WP_REST_Response($pedigree, 200);
@@ -586,7 +586,7 @@ class TruePaws_REST_API {
         // Check if animal exists
         $animal_exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table_animals WHERE id = %d", $animal_id));
         if (!$animal_exists) {
-            return new WP_Error('animal_not_found', __('Animal not found.', TRUEPAWS_TEXT_DOMAIN), array('status' => 404));
+            return new WP_Error('animal_not_found', __('Animal not found.', 'truepaws'), array('status' => 404));
         }
 
         $data = array(
@@ -600,19 +600,19 @@ class TruePaws_REST_API {
 
         // Validate required fields
         if (empty($data['event_type']) || empty($data['event_date'])) {
-            return new WP_Error('missing_required_fields', __('Event type and date are required.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('missing_required_fields', __('Event type and date are required.', 'truepaws'), array('status' => 400));
         }
 
         // Validate event type
         $valid_types = array('birth', 'vaccine', 'heat', 'mating', 'whelping', 'weight', 'vet_visit', 'note');
         if (!in_array($data['event_type'], $valid_types)) {
-            return new WP_Error('invalid_event_type', __('Invalid event type.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('invalid_event_type', __('Invalid event type.', 'truepaws'), array('status' => 400));
         }
 
         $result = $wpdb->insert($table_events, $data);
 
         if ($result === false) {
-            return new WP_Error('db_error', __('Failed to create event.', TRUEPAWS_TEXT_DOMAIN), array('status' => 500));
+            return new WP_Error('db_error', __('Failed to create event.', 'truepaws'), array('status' => 500));
         }
 
         $event_id = $wpdb->insert_id;
@@ -633,7 +633,7 @@ class TruePaws_REST_API {
         // Check if event exists
         $existing = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table_events WHERE id = %d", $id));
         if (!$existing) {
-            return new WP_Error('event_not_found', __('Event not found.', TRUEPAWS_TEXT_DOMAIN), array('status' => 404));
+            return new WP_Error('event_not_found', __('Event not found.', 'truepaws'), array('status' => 404));
         }
 
         $data = array();
@@ -651,13 +651,13 @@ class TruePaws_REST_API {
         }
 
         if (empty($data)) {
-            return new WP_Error('no_data', __('No data provided for update.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('no_data', __('No data provided for update.', 'truepaws'), array('status' => 400));
         }
 
         $result = $wpdb->update($table_events, $data, array('id' => $id));
 
         if ($result === false) {
-            return new WP_Error('db_error', __('Failed to update event.', TRUEPAWS_TEXT_DOMAIN), array('status' => 500));
+            return new WP_Error('db_error', __('Failed to update event.', 'truepaws'), array('status' => 500));
         }
 
         return new WP_REST_Response(array('id' => $id, 'updated' => true), 200);
@@ -675,13 +675,13 @@ class TruePaws_REST_API {
         // Check if event exists
         $existing = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table_events WHERE id = %d", $id));
         if (!$existing) {
-            return new WP_Error('event_not_found', __('Event not found.', TRUEPAWS_TEXT_DOMAIN), array('status' => 404));
+            return new WP_Error('event_not_found', __('Event not found.', 'truepaws'), array('status' => 404));
         }
 
         $result = $wpdb->delete($table_events, array('id' => $id));
 
         if ($result === false) {
-            return new WP_Error('db_error', __('Failed to delete event.', TRUEPAWS_TEXT_DOMAIN), array('status' => 500));
+            return new WP_Error('db_error', __('Failed to delete event.', 'truepaws'), array('status' => 500));
         }
 
         return new WP_REST_Response(array('deleted' => true), 200);
@@ -754,7 +754,7 @@ class TruePaws_REST_API {
         ), ARRAY_A);
 
         if (!$litter) {
-            return new WP_Error('litter_not_found', __('Litter not found.', TRUEPAWS_TEXT_DOMAIN), array('status' => 404));
+            return new WP_Error('litter_not_found', __('Litter not found.', 'truepaws'), array('status' => 404));
         }
 
         // Format data
@@ -784,11 +784,11 @@ class TruePaws_REST_API {
         $sire = $wpdb->get_row($wpdb->prepare("SELECT sex FROM $table_animals WHERE id = %d", $sire_id), ARRAY_A);
 
         if (!$dam || $dam['sex'] !== 'F') {
-            return new WP_Error('invalid_dam', __('Dam must be a female animal.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('invalid_dam', __('Dam must be a female animal.', 'truepaws'), array('status' => 400));
         }
 
         if (!$sire || $sire['sex'] !== 'M') {
-            return new WP_Error('invalid_sire', __('Sire must be a male animal.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('invalid_sire', __('Sire must be a male animal.', 'truepaws'), array('status' => 400));
         }
 
         $data = array(
@@ -804,7 +804,7 @@ class TruePaws_REST_API {
         $result = $wpdb->insert($table, $data);
 
         if ($result === false) {
-            return new WP_Error('db_error', __('Failed to create litter.', TRUEPAWS_TEXT_DOMAIN), array('status' => 500));
+            return new WP_Error('db_error', __('Failed to create litter.', 'truepaws'), array('status' => 500));
         }
 
         $litter_id = $wpdb->insert_id;
@@ -825,7 +825,7 @@ class TruePaws_REST_API {
         // Check if litter exists
         $existing = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE id = %d", $id));
         if (!$existing) {
-            return new WP_Error('litter_not_found', __('Litter not found.', TRUEPAWS_TEXT_DOMAIN), array('status' => 404));
+            return new WP_Error('litter_not_found', __('Litter not found.', 'truepaws'), array('status' => 404));
         }
 
         $data = array();
@@ -850,13 +850,13 @@ class TruePaws_REST_API {
         }
 
         if (empty($data)) {
-            return new WP_Error('no_data', __('No data provided for update.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('no_data', __('No data provided for update.', 'truepaws'), array('status' => 400));
         }
 
         $result = $wpdb->update($table, $data, array('id' => $id));
 
         if ($result === false) {
-            return new WP_Error('db_error', __('Failed to update litter.', TRUEPAWS_TEXT_DOMAIN), array('status' => 500));
+            return new WP_Error('db_error', __('Failed to update litter.', 'truepaws'), array('status' => 500));
         }
 
         return new WP_REST_Response(array('id' => $id, 'updated' => true), 200);
@@ -874,13 +874,13 @@ class TruePaws_REST_API {
         // Check if litter exists
         $existing = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE id = %d", $id));
         if (!$existing) {
-            return new WP_Error('litter_not_found', __('Litter not found.', TRUEPAWS_TEXT_DOMAIN), array('status' => 404));
+            return new WP_Error('litter_not_found', __('Litter not found.', 'truepaws'), array('status' => 404));
         }
 
         $result = $wpdb->delete($table, array('id' => $id));
 
         if ($result === false) {
-            return new WP_Error('db_error', __('Failed to delete litter.', TRUEPAWS_TEXT_DOMAIN), array('status' => 500));
+            return new WP_Error('db_error', __('Failed to delete litter.', 'truepaws'), array('status' => 500));
         }
 
         return new WP_REST_Response(array('deleted' => true), 200);
@@ -900,7 +900,7 @@ class TruePaws_REST_API {
         // Get litter data
         $litter = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_litters WHERE id = %d", $litter_id), ARRAY_A);
         if (!$litter) {
-            return new WP_Error('litter_not_found', __('Litter not found.', TRUEPAWS_TEXT_DOMAIN), array('status' => 404));
+            return new WP_Error('litter_not_found', __('Litter not found.', 'truepaws'), array('status' => 404));
         }
 
         $actual_date = $request->get_param('actual_date');
@@ -908,7 +908,7 @@ class TruePaws_REST_API {
         $female_count = absint($request->get_param('female_count'));
 
         if (empty($actual_date)) {
-            return new WP_Error('missing_date', __('Actual whelping date is required.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('missing_date', __('Actual whelping date is required.', 'truepaws'), array('status' => 400));
         }
 
         // Update litter record
@@ -1042,7 +1042,7 @@ class TruePaws_REST_API {
         ), ARRAY_A);
 
         if (!$contact) {
-            return new WP_Error('contact_not_found', __('Contact not found.', TRUEPAWS_TEXT_DOMAIN), array('status' => 404));
+            return new WP_Error('contact_not_found', __('Contact not found.', 'truepaws'), array('status' => 404));
         }
 
         $contact['id'] = (int) $contact['id'];
@@ -1070,12 +1070,12 @@ class TruePaws_REST_API {
 
         // Validate required fields
         if (empty($data['first_name']) || empty($data['email'])) {
-            return new WP_Error('missing_required_fields', __('First name and email are required.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('missing_required_fields', __('First name and email are required.', 'truepaws'), array('status' => 400));
         }
 
         // Validate email
         if (!is_email($data['email'])) {
-            return new WP_Error('invalid_email', __('Invalid email address.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('invalid_email', __('Invalid email address.', 'truepaws'), array('status' => 400));
         }
 
         // Check for duplicate email
@@ -1084,13 +1084,13 @@ class TruePaws_REST_API {
             $data['email']
         ));
         if ($existing) {
-            return new WP_Error('duplicate_email', __('Email address already exists.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('duplicate_email', __('Email address already exists.', 'truepaws'), array('status' => 400));
         }
 
         $result = $wpdb->insert($table, $data);
 
         if ($result === false) {
-            return new WP_Error('db_error', __('Failed to create contact.', TRUEPAWS_TEXT_DOMAIN), array('status' => 500));
+            return new WP_Error('db_error', __('Failed to create contact.', 'truepaws'), array('status' => 500));
         }
 
         $contact_id = $wpdb->insert_id;
@@ -1111,7 +1111,7 @@ class TruePaws_REST_API {
         // Check if contact exists
         $existing = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE id = %d", $id));
         if (!$existing) {
-            return new WP_Error('contact_not_found', __('Contact not found.', TRUEPAWS_TEXT_DOMAIN), array('status' => 404));
+            return new WP_Error('contact_not_found', __('Contact not found.', 'truepaws'), array('status' => 404));
         }
 
         $data = array();
@@ -1129,7 +1129,7 @@ class TruePaws_REST_API {
                             $data[$field], $id
                         ));
                         if ($duplicate) {
-                            return new WP_Error('duplicate_email', __('Email address already exists.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+                            return new WP_Error('duplicate_email', __('Email address already exists.', 'truepaws'), array('status' => 400));
                         }
                     }
                 } else {
@@ -1140,11 +1140,11 @@ class TruePaws_REST_API {
 
         // Validate email if provided
         if (isset($data['email']) && !is_email($data['email'])) {
-            return new WP_Error('invalid_email', __('Invalid email address.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('invalid_email', __('Invalid email address.', 'truepaws'), array('status' => 400));
         }
 
         if (empty($data)) {
-            return new WP_Error('no_data', __('No data provided for update.', TRUEPAWS_TEXT_DOMAIN), array('status' => 400));
+            return new WP_Error('no_data', __('No data provided for update.', 'truepaws'), array('status' => 400));
         }
 
         $data['updated_at'] = current_time('mysql');
@@ -1152,7 +1152,7 @@ class TruePaws_REST_API {
         $result = $wpdb->update($table, $data, array('id' => $id));
 
         if ($result === false) {
-            return new WP_Error('db_error', __('Failed to update contact.', TRUEPAWS_TEXT_DOMAIN), array('status' => 500));
+            return new WP_Error('db_error', __('Failed to update contact.', 'truepaws'), array('status' => 500));
         }
 
         return new WP_REST_Response(array('id' => $id, 'updated' => true), 200);
@@ -1170,13 +1170,13 @@ class TruePaws_REST_API {
         // Check if contact exists
         $existing = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE id = %d", $id));
         if (!$existing) {
-            return new WP_Error('contact_not_found', __('Contact not found.', TRUEPAWS_TEXT_DOMAIN), array('status' => 404));
+            return new WP_Error('contact_not_found', __('Contact not found.', 'truepaws'), array('status' => 404));
         }
 
         $result = $wpdb->delete($table, array('id' => $id));
 
         if ($result === false) {
-            return new WP_Error('db_error', __('Failed to delete contact.', TRUEPAWS_TEXT_DOMAIN), array('status' => 500));
+            return new WP_Error('db_error', __('Failed to delete contact.', 'truepaws'), array('status' => 500));
         }
 
         return new WP_REST_Response(array('deleted' => true), 200);
@@ -1192,7 +1192,7 @@ class TruePaws_REST_API {
         $pdf_path = $pdf_generator->generate_handover_pdf($animal_id);
 
         if (!$pdf_path) {
-            return new WP_Error('pdf_generation_failed', __('Failed to generate handover PDF.', TRUEPAWS_TEXT_DOMAIN), array('status' => 500));
+            return new WP_Error('pdf_generation_failed', __('Failed to generate handover PDF.', 'truepaws'), array('status' => 500));
         }
 
         $pdf_url = str_replace(WP_CONTENT_DIR, content_url(), $pdf_path);
@@ -1215,7 +1215,7 @@ class TruePaws_REST_API {
             'animal_id' => $animal_id,
             'event_type' => 'birth',
             'event_date' => $birth_date,
-            'title' => __('Birth', TRUEPAWS_TEXT_DOMAIN),
+            'title' => __('Birth', 'truepaws'),
             'meta_data' => wp_json_encode(array()),
             'created_by' => get_current_user_id()
         );
@@ -1229,7 +1229,7 @@ class TruePaws_REST_API {
     private function update_animal_args() {
         return array_merge($this->create_animal_args(), array(
             'status' => array(
-                'description' => __('Animal status.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Animal status.', 'truepaws'),
                 'type' => 'string',
                 'enum' => array('active', 'retired', 'sold', 'deceased', 'co-owned'),
             ),
@@ -1242,7 +1242,7 @@ class TruePaws_REST_API {
     private function get_timeline_args() {
         return array(
             'limit' => array(
-                'description' => __('Maximum number of events to return.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Maximum number of events to return.', 'truepaws'),
                 'type' => 'integer',
                 'default' => 50,
                 'sanitize_callback' => 'absint',
@@ -1256,7 +1256,7 @@ class TruePaws_REST_API {
     private function get_pedigree_args() {
         return array(
             'generations' => array(
-                'description' => __('Number of generations to include.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Number of generations to include.', 'truepaws'),
                 'type' => 'integer',
                 'default' => 3,
                 'minimum' => 1,
@@ -1272,13 +1272,13 @@ class TruePaws_REST_API {
     private function get_litters_args() {
         return array(
             'page' => array(
-                'description' => __('Current page of the collection.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Current page of the collection.', 'truepaws'),
                 'type' => 'integer',
                 'default' => 1,
                 'sanitize_callback' => 'absint',
             ),
             'per_page' => array(
-                'description' => __('Maximum number of items to be returned in result set.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Maximum number of items to be returned in result set.', 'truepaws'),
                 'type' => 'integer',
                 'default' => 20,
                 'sanitize_callback' => 'absint',
@@ -1292,36 +1292,36 @@ class TruePaws_REST_API {
     private function create_litter_args() {
         return array(
             'litter_name' => array(
-                'description' => __('Litter name.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Litter name.', 'truepaws'),
                 'type' => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
             ),
             'dam_id' => array(
                 'required' => true,
-                'description' => __('Dam (mother) animal ID.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Dam (mother) animal ID.', 'truepaws'),
                 'type' => 'integer',
                 'sanitize_callback' => 'absint',
             ),
             'sire_id' => array(
                 'required' => true,
-                'description' => __('Sire (father) animal ID.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Sire (father) animal ID.', 'truepaws'),
                 'type' => 'integer',
                 'sanitize_callback' => 'absint',
             ),
             'mating_date' => array(
                 'required' => true,
-                'description' => __('Mating date.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Mating date.', 'truepaws'),
                 'type' => 'string',
                 'format' => 'date',
             ),
             'mating_method' => array(
-                'description' => __('Mating method.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Mating method.', 'truepaws'),
                 'type' => 'string',
                 'enum' => array('natural', 'ai'),
                 'default' => 'natural',
             ),
             'notes' => array(
-                'description' => __('Additional notes.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Additional notes.', 'truepaws'),
                 'type' => 'string',
                 'sanitize_callback' => 'sanitize_textarea_field',
             ),
@@ -1342,20 +1342,20 @@ class TruePaws_REST_API {
         return array(
             'actual_date' => array(
                 'required' => true,
-                'description' => __('Actual whelping date.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Actual whelping date.', 'truepaws'),
                 'type' => 'string',
                 'format' => 'date',
             ),
             'male_count' => array(
                 'required' => true,
-                'description' => __('Number of male puppies.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Number of male puppies.', 'truepaws'),
                 'type' => 'integer',
                 'default' => 0,
                 'sanitize_callback' => 'absint',
             ),
             'female_count' => array(
                 'required' => true,
-                'description' => __('Number of female puppies.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Number of female puppies.', 'truepaws'),
                 'type' => 'integer',
                 'default' => 0,
                 'sanitize_callback' => 'absint',
@@ -1369,23 +1369,23 @@ class TruePaws_REST_API {
     private function get_contacts_args() {
         return array(
             'page' => array(
-                'description' => __('Current page of the collection.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Current page of the collection.', 'truepaws'),
                 'type' => 'integer',
                 'default' => 1,
                 'sanitize_callback' => 'absint',
             ),
             'per_page' => array(
-                'description' => __('Maximum number of items to be returned in result set.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Maximum number of items to be returned in result set.', 'truepaws'),
                 'type' => 'integer',
                 'default' => 20,
                 'sanitize_callback' => 'absint',
             ),
             'search' => array(
-                'description' => __('Limit results to those matching a string.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Limit results to those matching a string.', 'truepaws'),
                 'type' => 'string',
             ),
             'status' => array(
-                'description' => __('Limit results to contacts with specific status.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Limit results to contacts with specific status.', 'truepaws'),
                 'type' => 'string',
                 'enum' => array('waitlist', 'reserved', 'buyer', 'inactive'),
             ),
@@ -1399,39 +1399,39 @@ class TruePaws_REST_API {
         return array(
             'first_name' => array(
                 'required' => true,
-                'description' => __('First name.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('First name.', 'truepaws'),
                 'type' => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
             ),
             'last_name' => array(
-                'description' => __('Last name.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Last name.', 'truepaws'),
                 'type' => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
             ),
             'email' => array(
                 'required' => true,
-                'description' => __('Email address.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Email address.', 'truepaws'),
                 'type' => 'string',
                 'format' => 'email',
                 'sanitize_callback' => 'sanitize_email',
             ),
             'phone' => array(
-                'description' => __('Phone number.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Phone number.', 'truepaws'),
                 'type' => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
             ),
             'address' => array(
-                'description' => __('Address.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Address.', 'truepaws'),
                 'type' => 'string',
                 'sanitize_callback' => 'sanitize_textarea_field',
             ),
             'notes' => array(
-                'description' => __('Additional notes.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Additional notes.', 'truepaws'),
                 'type' => 'string',
                 'sanitize_callback' => 'sanitize_textarea_field',
             ),
             'status' => array(
-                'description' => __('Contact status.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Contact status.', 'truepaws'),
                 'type' => 'string',
                 'enum' => array('waitlist', 'reserved', 'buyer', 'inactive'),
                 'default' => 'waitlist',
@@ -1453,23 +1453,23 @@ class TruePaws_REST_API {
         return array(
             'event_type' => array(
                 'required' => true,
-                'description' => __('Event type.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Event type.', 'truepaws'),
                 'type' => 'string',
                 'enum' => array('birth', 'vaccine', 'heat', 'mating', 'whelping', 'weight', 'vet_visit', 'note'),
             ),
             'event_date' => array(
                 'required' => true,
-                'description' => __('Event date.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Event date.', 'truepaws'),
                 'type' => 'string',
                 'format' => 'date-time',
             ),
             'title' => array(
-                'description' => __('Event title.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Event title.', 'truepaws'),
                 'type' => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
             ),
             'meta_data' => array(
-                'description' => __('Additional event data.', TRUEPAWS_TEXT_DOMAIN),
+                'description' => __('Additional event data.', 'truepaws'),
                 'type' => 'object',
             ),
         );

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { __ } from '@wordpress/i18n';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -99,7 +100,7 @@ function WeightGrowthChart({ timeline }) {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
           </svg>
-          <h3 className="section-title">Weight Growth</h3>
+          <h3 className="section-title">{__('Weight Growth', 'truepaws')}</h3>
         </div>
         <div className="weight-growth-summary">
           <span className="weight-current">{latestWeight.weight} {latestWeight.unit}</span>

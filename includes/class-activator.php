@@ -130,7 +130,7 @@ class TruePaws_Activator {
         add_option('truepaws_default_species', 'dog');
         add_option('truepaws_pregnancy_dog_days', 63);
         add_option('truepaws_pregnancy_cat_days', 65);
-        add_option('truepaws_feeding_instructions', __('Please consult with your veterinarian for specific feeding recommendations based on your puppy\'s breed, age, and health needs.', TRUEPAWS_TEXT_DOMAIN));
+        add_option('truepaws_feeding_instructions', __('Please consult with your veterinarian for specific feeding recommendations based on your puppy\'s breed, age, and health needs.', 'truepaws'));
     }
 
     /**

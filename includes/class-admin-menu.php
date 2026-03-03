@@ -25,8 +25,8 @@ class TruePaws_Admin_Menu {
      */
     public function add_admin_menu() {
         add_menu_page(
-            __('TruePaws', TRUEPAWS_TEXT_DOMAIN),
-            __('TruePaws', TRUEPAWS_TEXT_DOMAIN),
+            __('TruePaws', 'truepaws'),
+            __('TruePaws', 'truepaws'),
             'manage_options',
             'truepaws',
             array($this, 'admin_page'),
@@ -37,8 +37,8 @@ class TruePaws_Admin_Menu {
         // Add submenu for settings
         add_submenu_page(
             'truepaws',
-            __('Settings', TRUEPAWS_TEXT_DOMAIN),
-            __('Settings', TRUEPAWS_TEXT_DOMAIN),
+            __('Settings', 'truepaws'),
+            __('Settings', 'truepaws'),
             'manage_options',
             'truepaws-settings',
             array($this, 'settings_page')
@@ -67,7 +67,7 @@ class TruePaws_Admin_Menu {
         }
 
         echo '<div class="wrap">';
-        echo '<h1>' . __('TruePaws Settings', TRUEPAWS_TEXT_DOMAIN) . '</h1>';
+        echo '<h1>' . __('TruePaws Settings', 'truepaws') . '</h1>';
         echo '<form method="post" action="options.php">';
 
         settings_fields('truepaws_settings');
@@ -117,7 +117,7 @@ class TruePaws_Admin_Menu {
         $build_file = TRUEPAWS_PLUGIN_DIR . 'assets/build/main.js';
         if (!file_exists($build_file)) {
             echo '<div class="notice notice-warning"><p>';
-            echo __('TruePaws React application not found. Please build the frontend assets.', TRUEPAWS_TEXT_DOMAIN);
+            echo __('TruePaws React application not found. Please build the frontend assets.', 'truepaws');
             echo '</p></div>';
             return;
         }
@@ -131,6 +131,8 @@ class TruePaws_Admin_Menu {
             true
         );
 
+        wp_set_script_translations('truepaws-app', 'truepaws', TRUEPAWS_PLUGIN_DIR . 'languages');
+
         // Localize script with necessary data
         wp_localize_script('truepaws-app', 'truepawsConfig', array(
             'apiUrl' => esc_url_raw(rest_url('truepaws/v1/')),
@@ -138,10 +140,10 @@ class TruePaws_Admin_Menu {
             'userId' => get_current_user_id(),
             'locale' => get_locale(),
             'strings' => array(
-                'loading' => __('Loading...', TRUEPAWS_TEXT_DOMAIN),
-                'error' => __('An error occurred', TRUEPAWS_TEXT_DOMAIN),
-                'save' => __('Save', TRUEPAWS_TEXT_DOMAIN),
-                'cancel' => __('Cancel', TRUEPAWS_TEXT_DOMAIN),
+                'loading' => __('Loading...', 'truepaws'),
+                'error' => __('An error occurred', 'truepaws'),
+                'save' => __('Save', 'truepaws'),
+                'cancel' => __('Cancel', 'truepaws'),
             )
         ));
 
