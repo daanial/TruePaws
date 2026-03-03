@@ -21,7 +21,7 @@ The **active plugin code** lives in `truepaws/` (v1.1.0). The root-level `includ
 
 1. **Two admin-menu PHP files**: `includes/class-admin-menu.php` (root, uses `truepawsConfig`) vs `truepaws/includes/class-admin-menu.php` (uses `truepawsData`). The JS client expects `truepawsData`. The plugin must be symlinked from `truepaws/` not the workspace root.
 
-2. **Freemius SDK**: On first activation, Freemius shows a license activation modal. Skip it for dev with:
+2. **Freemius SDK**: The secret key is configured in `wp-config.php` as `WP_FS__truepaws_SECRET_KEY`. On first activation, Freemius may show a license activation modal. Skip it for dev with:
    ```bash
    cd /var/www/html/wordpress && wp eval 'if(function_exists("tru_fs")){tru_fs()->skip_connection(null,true);echo "skipped\n";}' --allow-root
    ```
